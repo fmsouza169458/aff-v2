@@ -64,7 +64,7 @@ def server_fn(context: Context):
     testloader = DataLoader(testset.with_transform(get_transforms()), batch_size=32)
    
     
-    strategy = AFFStrategyWithoutHet(
+    strategy = AFFStrategy(
         initial_parameters=parameters,
         evaluate_metrics_aggregation_fn=weighted_average,
         fit_metrics_aggregation_fn=handle_fit_metrics,
