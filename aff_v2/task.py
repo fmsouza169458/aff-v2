@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from flwr_datasets import FederatedDataset
-from flwr_datasets.partitioner import IidPartitioner
+from flwr_datasets.partitioner import DirichletPartitioner
 from torch.utils.data import DataLoader
 from torchvision.transforms import Compose, Normalize, ToTensor
 
@@ -30,21 +30,60 @@ class Net(nn.Module):
         return self.fc3(x)
 
 
+def get_transforms():
+    """Return a function that apply standard transformations to images."""
+
+    pytorch_transforms = Compose([ToTensor(), Normalize((0.5,), (0.5,))])
+
+    def apply_transforms(batch):
+        """Apply transforms to the partition from FederatedDataset."""
+        batch["img"] = [pytorch_transforms(img) for img in batch["img"]]
+        return batch
+
+    return apply_transforms
+
+
 fds = None  # Cache FederatedDataset
 
 
+"""
 def load_data(partition_id: int, num_partitions: int):
-    """Load partition CIFAR10 data."""
+    # Load partition FashionMNIST data.
     # Only initialize `FederatedDataset` once
     global fds
     if fds is None:
-        partitioner = IidPartitioner(num_partitions=num_partitions)
+        partitioner = DirichletPartitioner(
+            num_partitions=num_partitions, partition_by="label", alpha=0.3
+        )
+        fds = FederatedDataset(
+            dataset="cifar10",
+            partitioners={"train": partitioner},
+        )
+    partition = fds.load_partition(partition_id)
+    # Divide data on each node: 80% train, 20% test
+    partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
+
+    partition_train_test = partition_train_test.with_transform(get_transforms())
+    trainloader = DataLoader(partition_train_test["train"], batch_size=32, shuffle=True)
+    testloader = DataLoader(partition_train_test["test"], batch_size=32)
+    return trainloader, testloader
+"""
+
+
+def load_data(partition_id: int, num_partitions: int):
+    print("Start partitioning")
+    global fds
+    if fds is None:
+        partitioner = DirichletPartitioner(
+            num_partitions=num_partitions,
+            partition_by="label", 
+            alpha=1.0)
         fds = FederatedDataset(
             dataset="uoft-cs/cifar10",
             partitioners={"train": partitioner},
         )
     partition = fds.load_partition(partition_id)
-    # Divide data on each node: 80% train, 20% test
+
     partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
     pytorch_transforms = Compose(
         [ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
@@ -56,16 +95,26 @@ def load_data(partition_id: int, num_partitions: int):
         return batch
 
     partition_train_test = partition_train_test.with_transform(apply_transforms)
-    trainloader = DataLoader(partition_train_test["train"], batch_size=32, shuffle=True)
+    trainloader = DataLoader(
+        partition_train_test["train"], batch_size=32, shuffle=True
+    )
+    print(f"[DEBUG] Partição {partition_id}: {len(trainloader.dataset)} exemplos")
+
     testloader = DataLoader(partition_train_test["test"], batch_size=32)
+    
     return trainloader, testloader
 
 
-def train(net, trainloader, epochs, device):
-    """Train the model on the training set."""
+def train(net, trainloader, epochs, device, lr):
+    """Train the model on the training set.
+
+    This is a fairly standard training loop for PyTorch. Note there is nothing specific
+    about Flower or Federated AI here.
+    """
+    print(f"[CLIENT DEBUG] Treinando com {len(trainloader.dataset)} exemplos")
     net.to(device)  # move model to GPU if available
     criterion = torch.nn.CrossEntropyLoss().to(device)
-    optimizer = torch.optim.Adam(net.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
     net.train()
     running_loss = 0.0
     for _ in range(epochs):
@@ -83,7 +132,11 @@ def train(net, trainloader, epochs, device):
 
 
 def test(net, testloader, device):
-    """Validate the model on the test set."""
+    """Validate the model on the test set.
+
+    This is a fairly standard training loop for PyTorch. Note there is nothing specific
+    about Flower or Federated AI here.
+    """
     net.to(device)
     criterion = torch.nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
@@ -100,10 +153,22 @@ def test(net, testloader, device):
 
 
 def get_weights(net):
+    """Extract parameters from a model.
+
+    Note this is specific to PyTorch. You might want to update this function if you use
+    a more exotic model architecture or if you don't want to extrac all elements in
+    state_dict.
+    """
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
 
 def set_weights(net, parameters):
+    """Copy paramteres onto the model.
+
+    Note this is specific to PyTorch. You might want to update this function if you use
+    a more exotic model architecture or if you don't want to replace the entire
+    state_dict.
+    """
     params_dict = zip(net.state_dict().keys(), parameters)
-    state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+    state_dict = OrderedDict({k: torch.from_numpy(v) for k, v in params_dict})
     net.load_state_dict(state_dict, strict=True)

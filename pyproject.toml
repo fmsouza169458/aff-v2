@@ -25,12 +25,19 @@ serverapp = "aff_v2.server_app:app"
 clientapp = "aff_v2.client_app:app"
 
 [tool.flwr.app.config]
-num-server-rounds = 3
-fraction-fit = 0.5
+num-server-rounds = 250
+fraction-fit = 0.1
 local-epochs = 1
+min-available-clients = 100
+alpha-dirichlet = 1000
+batch-size = 32
+learning-rate = 0.005
 
 [tool.flwr.federations]
 default = "local-simulation"
 
 [tool.flwr.federations.local-simulation]
-options.num-supernodes = 10
+options.num-supernodes = 100
+
+[tool.flower.simulation]
+num_clients = 100
