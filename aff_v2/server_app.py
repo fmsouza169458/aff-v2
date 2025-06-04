@@ -1,30 +1,24 @@
 import json
+import os
 from typing import List, Tuple
 from flwr.common import Context, ndarrays_to_parameters, Metrics
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from torch.utils.data import DataLoader
 from datasets import load_dataset
 
-#from aff_v2.task_cifar import Net, get_weights, set_weights, test, get_transforms
-from aff_v2.task_mnist import Net, get_weights, set_weights, test, get_transforms
-#from aff_v2.task import Net, get_weights, set_weights, test, get_transforms
+from aff_v2.task_cifar import Net as cifar_net, get_weights as cifar_get_weights, set_weights as cifar_set_weights, test as cifar_test, get_transforms as cifar_get_transforms
+from aff_v2.task_mnist import Net as mnist_net, get_weights as mnist_get_weights, set_weights as mnist_set_weights, test as mnist_test, get_transforms as mnist_get_transforms
 
-from torchvision.transforms import ToTensor
-from torchvision.datasets import CIFAR10
-
-from aff_v2.aff import AFFStrategy
-from aff_v2.aff_without_het import AFFStrategyWithoutHet
 from aff_v2.fedavgg_constant import FedAvgWithLogging
+from aff_v2.aff_with_gaussian import AffWithGaussian
+from aff_v2.aff_with_het import AffWithHet
 
-def get_evaluate_fn(testloader, device):
-    """Return a callback that evaluates the global model."""
+def get_evaluate_fn(testloader, device, net_function, set_weights_function, test_function):
     def evaluate(server_round, parameters_ndarrays, config):
-        # Instantiate model
-        net = Net()
-        set_weights(net, parameters_ndarrays)
+        net = net_function()
+        set_weights_function(net, parameters_ndarrays)
         net.to(device)
-        # Run test
-        loss, accuracy = test(net, testloader, device)
+        loss, accuracy = test_function(net, testloader, device)
         return loss, {"cen_accuracy": accuracy}
     return evaluate
 
@@ -50,49 +44,117 @@ def on_fit_config(server_round: int) -> Metrics:
         lr = 0.005
     return {"lr": lr}
 
+def get_strategy_config() -> dict:
+    dataset = os.getenv("DATASET", "MNIST")
+    initial_ff = float(os.getenv("INITIAL_FF", "0.1"))
+    alpha = float(os.getenv("ALPHA", "0.3"))
+    strategy_type = os.getenv("STRATEGY", "AFF_V4")
+    polynomial_degree = int(os.getenv("POLYNOMIAL_DEGREE", "1"))
+    max_window_size = int(os.getenv("MAX_WINDOW_SIZE", "20"))
+    min_window_size = int(os.getenv("MIN_WINDOW_SIZE", "2"))
+    use_heterogeneity = os.getenv("USE_HETEROGENEITY", "false").lower() == "true"
+    regression_type = os.getenv("REGRESSION_TYPE", "gaussian")
+    gaussian_sigma = float(os.getenv("GAUSSIAN_SIGMA", "1.0"))
+    heterogeneity_moderation_factor = float(os.getenv("HETEROGENEITY_MODERATION_FACTOR", "0.3"))
+    
+    heterogeneity_weights = None
+    if use_heterogeneity:
+        heterogeneity_weights = {
+            "cosine": float(os.getenv("HET_WEIGHT_COSINE", "0.4")),
+            "variance": float(os.getenv("HET_WEIGHT_VARIANCE", "0.6"))
+        }
+    
+    config = {
+        "dataset": dataset,
+        "initial_ff": initial_ff,
+        "alpha": alpha,
+        "strategy_type": strategy_type,
+        "polynomial_degree": polynomial_degree,
+        "max_window_size": max_window_size,
+        "min_window_size": min_window_size,
+        "use_heterogeneity": use_heterogeneity,
+        "heterogeneity_weights": heterogeneity_weights,
+        "heterogeneity_moderation_factor": heterogeneity_moderation_factor,
+        "regression_type": regression_type,
+        "gaussian_sigma": gaussian_sigma
+    }
+    
+    return config
+
 
 def server_fn(context: Context):
     num_rounds = context.run_config["num-server-rounds"]
     fraction_fit = context.run_config["fraction-fit"]
+     
+    strategy_config = get_strategy_config()
 
-    # Inicializa os pesos do modelo
-    ndarrays = get_weights(Net())
-    parameters = ndarrays_to_parameters(ndarrays)
+    if strategy_config["dataset"] == "MNIST":
+        ndarrays = mnist_get_weights(mnist_net())
+        parameters = ndarrays_to_parameters(ndarrays)
 
-    # Carrega conjunto de teste
-    testset = load_dataset("zalando-datasets/fashion_mnist")["test"]
-    testloader = DataLoader(testset.with_transform(get_transforms()), batch_size=32)
-   
-    
-    strategy = AFFStrategy(
-        initial_parameters=parameters,
-        evaluate_metrics_aggregation_fn=weighted_average,
-        fit_metrics_aggregation_fn=handle_fit_metrics,
-        on_fit_config_fn=on_fit_config,
-        evaluate_fn=get_evaluate_fn(testloader, device="cpu"),
-        min_available_clients=100,
-        max_clients=100,
-        initial_clients=10,
-    )
+        testset = load_dataset("zalando-datasets/fashion_mnist")["test"]
+        testloader = DataLoader(testset.with_transform(mnist_get_transforms()), batch_size=32)
 
-    """ # Prepare initial model parameters
-    model = Net()
-    model_params = [val.cpu().numpy() for _, val in model.state_dict().items()]
-    parameters = ndarrays_to_parameters(model_params)
+        net_function = mnist_net
+        set_weights_function = mnist_set_weights
+        test_function = mnist_test
+    elif strategy_config["dataset"] == "CIFAR10":
+        ndarrays = cifar_get_weights(cifar_net())
+        parameters = ndarrays_to_parameters(ndarrays)
 
-    # Define strategy
-    strategy = FedAvgWithLogging(
-        fraction_fit=0.1,
-        min_available_clients=100,
-        evaluate_fn=get_evaluate_fn(testloader, device="cpu"),
-        on_fit_config_fn=on_fit_config,
-        initial_parameters=parameters,
-    ) """
+        testset = load_dataset("uoft-cs/cifar10")["test"]
+        testloader = DataLoader(testset.with_transform(cifar_get_transforms()), batch_size=32)
+
+        net_function = cifar_net
+        set_weights_function = cifar_set_weights
+        test_function = cifar_test
+
+    if strategy_config["strategy_type"] == "AFF_V2":
+        strategy = AffWithGaussian(
+            initial_parameters=parameters,
+            evaluate_metrics_aggregation_fn=weighted_average,
+            fit_metrics_aggregation_fn=handle_fit_metrics,
+            on_fit_config_fn=on_fit_config,
+            evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
+            min_available_clients=100,
+            max_participants=100,
+            number_of_participants=int(100*strategy_config["initial_ff"]),
+            degree=strategy_config["polynomial_degree"],
+            max_window_size=strategy_config["max_window_size"],
+            min_window_size=strategy_config["min_window_size"],
+            use_heterogeneity=strategy_config["use_heterogeneity"],
+            heterogeneity_weights=strategy_config["heterogeneity_weights"],
+            heterogeneity_moderation_factor=strategy_config["heterogeneity_moderation_factor"],
+            regression_type=strategy_config["regression_type"],
+            gaussian_sigma=strategy_config["gaussian_sigma"]
+        )
+    elif strategy_config["strategy_type"] == "AFF_V4":
+        strategy = AffWithHet(
+            initial_parameters=parameters,
+            evaluate_metrics_aggregation_fn=weighted_average,
+            fit_metrics_aggregation_fn=handle_fit_metrics,
+            on_fit_config_fn=on_fit_config,
+            evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
+            min_available_clients=100,
+            max_clients=100,
+            initial_clients=int(100*strategy_config["initial_ff"]),
+            degree=strategy_config["polynomial_degree"],
+            max_window_size=strategy_config["max_window_size"],
+            min_window_size=strategy_config["min_window_size"]
+        )
+    elif strategy_config["strategy_type"] == "CONSTANT":
+        strategy = FedAvgWithLogging(
+            fraction_fit=strategy_config["initial_ff"],
+            min_available_clients=100,
+            evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
+            on_fit_config_fn=on_fit_config,
+            initial_parameters=parameters,
+        ) 
+
 
     config = ServerConfig(num_rounds=num_rounds)
 
     return ServerAppComponents(strategy=strategy, config=config)
 
 
-# Cria o servidor com AFF
 app = ServerApp(server_fn=server_fn)

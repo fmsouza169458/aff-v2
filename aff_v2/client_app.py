@@ -85,6 +85,8 @@ def client_fn(context: Context):
     # Read node config and fetch data for the ClientApp that is being constructed
     partition_id = context.node_config["partition-id"]
     num_partitions = context.node_config["num-partitions"]
+
+    
     alpha_dirichlet = context.run_config["alpha-dirichlet"]
     trainloader, valloader = load_data(partition_id, num_partitions, alpha_dirichlet)
     # Read the run config (defined in the `pyproject.toml`)
