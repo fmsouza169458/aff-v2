@@ -5,6 +5,7 @@ from flwr.common import Parameters
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from flwr.common import EvaluateRes, parameters_to_ndarrays
+from .cka import cka
 
 import numpy as np
 import math
@@ -179,8 +180,81 @@ class AffWithHet(FedAvg):
         new_cp = max(2, min(mp, new_cp))
         return new_cp
 
-    def compute_model_heterogeneity(self):
-        """IMPLEMENTAR CKA"""
+    def compute_model_heterogeneity(self, client_models):
+        print(f"[HETEROGENEITY] Calculando heterogeneidade CKA para {len(client_models)} modelos")
+        
+        if len(client_models) < 2:
+            return 0.0
+        
+        model_matrices = []
+        for i, model_params in enumerate(client_models):
+            flattened_params = np.concatenate([arr.flatten() for arr in model_params])
+
+            model_matrices.append(flattened_params.reshape(1, -1))
+        
+        n_models = len(model_matrices)
+        cka_similarities = []
+                
+        for i in range(n_models):
+            for j in range(i + 1, n_models):
+                try:
+                    X = model_matrices[i]
+                    Y = model_matrices[j]
+                    
+                    X_t = X.T
+                    Y_t = Y.T
+                    
+                    # Adicionamos ruído pequeno para evitar problemas numéricos
+                    """ epsilon = 1e-8
+                    X_t += np.random.normal(0, epsilon, X_t.shape)
+                    Y_t += np.random.normal(0, epsilon, Y_t.shape) """
+                    
+                    similarity = cka(X_t, Y_t)
+                    
+                    if np.isnan(similarity) or np.isinf(similarity):
+                        print(f"[HETEROGENEITY] CKA inválido entre modelos {i} e {j}, usando correlação alternativa")
+                        correlation = np.corrcoef(X.flatten(), Y.flatten())[0, 1]
+                        similarity = float(abs(correlation)) if not np.isnan(correlation) else 0.0
+                    else:
+                        similarity = float(similarity)
+                    
+                    cka_similarities.append(similarity)
+                    print(f"[HETEROGENEITY] CKA({i},{j}) = {similarity:.4f}")
+                    
+                except Exception as e:
+                    print(f"[HETEROGENEITY] Erro calculando CKA entre modelos {i} e {j}: {e}")
+                    try:
+                        correlation = np.corrcoef(
+                            model_matrices[i].flatten(), 
+                            model_matrices[j].flatten()
+                        )[0, 1]
+                        similarity = float(abs(correlation)) if not np.isnan(correlation) else 0.0
+                        cka_similarities.append(similarity)
+                        print(f"[HETEROGENEITY] Fallback correlation({i},{j}) = {similarity:.4f}")
+                    except:
+                        cka_similarities.append(0.0)
+                        print(f"[HETEROGENEITY] Fallback para similaridade 0.0")
+        
+        if not cka_similarities:
+            print(f"[HETEROGENEITY] Nenhuma similaridade calculada, retornando 0.0")
+            return 0.0
+        
+        avg_similarity = float(np.mean(cka_similarities))
+        min_similarity = float(np.min(cka_similarities))
+        max_similarity = float(np.max(cka_similarities))
+        
+        print(f"[HETEROGENEITY] Estatísticas CKA:")
+        print(f"  - Similaridade média: {avg_similarity:.4f}")
+        print(f"  - Similaridade mínima: {min_similarity:.4f}")
+        print(f"  - Similaridade máxima: {max_similarity:.4f}")
+        
+        heterogeneity = 1.0 - avg_similarity
+        
+        heterogeneity = float(np.clip(heterogeneity, 0.0, 1.0))
+        
+        print(f"[HETEROGENEITY] Heterogeneidade final: {heterogeneity:.4f}")
+        
+        return heterogeneity
 
     def configure_fit(self, server_round, parameters, client_manager):
         print(f"[DEBUG] configure_fit called at round {server_round}")
@@ -250,13 +324,25 @@ class AffWithHet(FedAvg):
             self.latest_accuracy = metrics["cen_accuracy"]
 
         my_results = {"loss": loss, **metrics}
+        
+        # Adicionar informações de heterogeneidade aos resultados salvos
+        if self.latest_heterogeneity is not None:
+            my_results["heterogeneity"] = float(self.latest_heterogeneity)  # Garantir que é float Python
+            my_results["homogeneity_detected"] = bool(self.homogeneity_detected)  # Garantir que é bool Python
+            
         self.results_to_save[server_round] = my_results
 
         accumulated_participants = [sum(self.clients_per_round[r] for r in sorted(self.clients_per_round) if r <= round_id) for round_id in sorted(self.clients_per_round)]
 
         for idx, r in enumerate(sorted(self.clients_per_round)):
-            self.results_to_save[r]["num_clients"] = self.clients_per_round[r]
-            self.results_to_save[r]["accumulated_clients"] = accumulated_participants[idx]
+            self.results_to_save[r]["num_clients"] = int(self.clients_per_round[r])  # Garantir que é int Python
+            self.results_to_save[r]["accumulated_clients"] = int(accumulated_participants[idx])  # Garantir que é int Python
+            
+            # Converter outros valores numpy que podem estar presentes
+            if "heterogeneity" in self.results_to_save[r]:
+                self.results_to_save[r]["heterogeneity"] = float(self.results_to_save[r]["heterogeneity"])
+            if "homogeneity_detected" in self.results_to_save[r]:
+                self.results_to_save[r]["homogeneity_detected"] = bool(self.results_to_save[r]["homogeneity_detected"])
 
         dataset = os.getenv("DATASET", "unknown")
         initial_ff = os.getenv("INITIAL_FF", "unknown")

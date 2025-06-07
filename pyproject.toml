@@ -24,7 +24,7 @@ clientapp = "aff_v2.client_app:app"
 
 [tool.flwr.app.config]
 num-server-rounds = 250
-fraction-fit = 0.05
+fraction-fit = 0.1
 local-epochs = 1
 min-available-clients = 100
 alpha-dirichlet = 0.3
