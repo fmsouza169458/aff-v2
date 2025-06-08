@@ -53,8 +53,6 @@ class AffWithHet(FedAvg):
         
         self.latest_heterogeneity = None
         self.heterogeneity_history = []
-        self.heterogeneity_threshold = 0.1 
-        self.homogeneity_detected = False
 
         print(f"[DEBUG] AFF Strategy Without Het initialized with:")
         print(f"  - max_clients: {max_clients}")
@@ -73,18 +71,13 @@ class AffWithHet(FedAvg):
         
         if heterogeneity is not None:
             self.heterogeneity_history.append(heterogeneity)
-            if heterogeneity < self.heterogeneity_threshold:
-                self.homogeneity_detected = True
-            else:
-                self.homogeneity_detected = False
         
         print(f"[AFF] Checking update condition:")
         print(f"  - Current round: {round_num}")
         print(f"  - Next update round: {self.next_round_update}")
         print(f"  - Should update: {self.next_round_update == round_num}")
-        print(f"  - Homogeneity detected: {self.homogeneity_detected}")
         
-        if self.next_round_update == round_num:            
+        if self.next_round_update == round_num:
             self.fit_polynomial_regression()
             self.update_change_direction()
 
@@ -158,26 +151,70 @@ class AffWithHet(FedAvg):
         print(f"  - Current: {self.number_of_participants}")
         print(f"  - Slope degree: {self.slope_degree}")
         print(f"  - Previous negative: {self.previous_negative_value}")
+        print(f"  - Heterogeneity: {self.latest_heterogeneity}")
 
         cp = self.number_of_participants
         mp = self.max_participants
         
-        if self.homogeneity_detected:
-            if self.slope_degree > 0:
-                factor = (1 - math.exp(-self.slope_degree / 45))
-                new_cp = cp - max(int(factor * (cp - self.lnc)), 2)
+        # Proteção: se previous_negative_value for None ou inválido, usar valor atual
+        if self.previous_negative_value is None or self.previous_negative_value <= 0:
+            self.previous_negative_value = cp
+            print(f"  - Corrigindo previous_negative_value para: {self.previous_negative_value}")
+
+        if self.latest_heterogeneity is not None:
+            # NOVA ABORDAGEM: Cálculo direto baseado na "necessidade de diversidade"
+            
+            # 1. Fator de performance (0 = performance ruim, 1 = performance boa)
+            performance_factor = max(0.0, min(1.0, self.slope_degree / 90.0)) if self.slope_degree > 0 else 0.0
+            print(f"  - Performance factor: {performance_factor:.4f}")
+            
+            # 2. Fator de diversidade necessária (0 = não precisa diversidade, 1 = precisa muito)
+            diversity_need = self.latest_heterogeneity  # Alta het = mais diversidade necessária
+            print(f"  - Diversity need: {diversity_need:.4f}")
+            
+            # 3. Calcular "eficiência atual" - se performance é boa mesmo com diversidade, podemos reduzir
+            if performance_factor >= 0:
+                # Performance boa: quanto maior a performance, menos clientes precisamos
+                efficiency_factor = performance_factor * (1.0 - diversity_need * 0.5)  # Het alta reduz eficiência
+                target_reduction_rate = efficiency_factor  # 0 a 1
+                print(f"  - Efficiency factor: {efficiency_factor:.4f}")
+                print(f"  - Target reduction rate: {target_reduction_rate:.4f}")
             else:
-                new_cp = max(self.min_participants, cp - 1)
+                # Performance ruim: precisamos mais clientes se há diversidade disponível
+                target_reduction_rate = -diversity_need  # Negativo = aumentar
+                print(f"  - Performance ruim, target reduction rate: {target_reduction_rate:.4f}")
+            
+            # 4. Calcular novo número de clientes baseado na "necessidade real"
+            if target_reduction_rate > 0:
+                # Reduzir clientes
+                max_possible_reduction = cp - self.min_participants
+                actual_reduction = max(1, int(target_reduction_rate * max_possible_reduction))
+                new_cp = cp - actual_reduction
+                print(f"  - Reduzindo {actual_reduction} clientes (rate={target_reduction_rate:.3f})")
+            else:
+                # Aumentar clientes (quando performance ruim E há diversidade disponível)
+                available_increase = mp - cp
+                actual_increase = max(1, int(abs(target_reduction_rate) * available_increase))
+                new_cp = cp + actual_increase
+                print(f"  - Aumentando {actual_increase} clientes (rate={abs(target_reduction_rate):.3f})")
+                
         else:
+            # Fallback: lógica original simplificada quando não há heterogeneidade
+            print(f"  - Sem heterogeneidade, usando lógica padrão")
+            
             if self.slope_degree > 0:
                 factor = (1 - math.exp(-self.slope_degree / 90))
-                new_cp = cp - max(int(factor * (cp - self.lnc)), 1)
+                reduction_amount = max(int(factor * (cp - self.previous_negative_value)), 1)
+                new_cp = cp - reduction_amount
+                print(f"  - Factor (redução): {factor:.4f}, reduzindo: {reduction_amount}")
             else:
                 factor = (-self.slope_degree / 90)
-                new_cp = cp + max(int(factor * (mp - cp)), 1)
-                self.lnc = cp
+                increase_amount = max(int(factor * (mp - cp)), 1)
+                new_cp = cp + increase_amount
+                print(f"  - Factor (aumento): {factor:.4f}, aumentando: {increase_amount}")
 
-        new_cp = max(2, min(mp, new_cp))
+        new_cp = max(self.min_participants, min(mp, new_cp))
+        print(f"  - Resultado: {cp} -> {new_cp}")
         return new_cp
 
     def compute_model_heterogeneity(self, client_models):
@@ -328,7 +365,6 @@ class AffWithHet(FedAvg):
         # Adicionar informações de heterogeneidade aos resultados salvos
         if self.latest_heterogeneity is not None:
             my_results["heterogeneity"] = float(self.latest_heterogeneity)  # Garantir que é float Python
-            my_results["homogeneity_detected"] = bool(self.homogeneity_detected)  # Garantir que é bool Python
             
         self.results_to_save[server_round] = my_results
 
@@ -341,15 +377,13 @@ class AffWithHet(FedAvg):
             # Converter outros valores numpy que podem estar presentes
             if "heterogeneity" in self.results_to_save[r]:
                 self.results_to_save[r]["heterogeneity"] = float(self.results_to_save[r]["heterogeneity"])
-            if "homogeneity_detected" in self.results_to_save[r]:
-                self.results_to_save[r]["homogeneity_detected"] = bool(self.results_to_save[r]["homogeneity_detected"])
 
         dataset = os.getenv("DATASET", "unknown")
         initial_ff = os.getenv("INITIAL_FF", "unknown")
         alpha = os.getenv("ALPHA", "unknown")
         strategy = os.getenv("STRATEGY", "unknown")
 
-        filename = f"TESTE_TERCA_{dataset}_ff{initial_ff}_alpha{alpha}_{strategy}.json"
+        filename = f"TESTE_SABADO_{dataset}_ff{initial_ff}_alpha{alpha}_{strategy}.json"
 
         with open(filename, "w") as f:
             json.dump(self.results_to_save, f, indent=4)

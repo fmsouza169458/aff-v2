@@ -1,5 +1,5 @@
 [build-system]
-requires = [ "hatchling",]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
@@ -7,16 +7,18 @@ name = "aff-v2"
 version = "1.0.0"
 description = ""
 license = "Apache-2.0"
-dependencies = [ "flwr[simulation]>=1.17.0", "flwr-datasets[vision]>=0.5.0", "torch==2.5.1", "torchvision==0.20.1",]
+dependencies = [
+    "flwr[simulation]>=1.17.0",
+    "flwr-datasets[vision]>=0.5.0",
+    "torch==2.5.1",
+    "torchvision==0.20.1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
 
 [tool.flwr.app]
 publisher = "felipesouza"
-
-[tool.flwr.federations]
-default = "local-simulation"
-
-[tool.flower.simulation]
-num_clients = 100
 
 [tool.flwr.app.components]
 serverapp = "aff_v2.server_app:app"
@@ -27,12 +29,15 @@ num-server-rounds = 250
 fraction-fit = 0.1
 local-epochs = 1
 min-available-clients = 100
-alpha-dirichlet = 0.3
+alpha-dirichlet = 1000
 batch-size = 32
 learning-rate = 0.005
 
-[tool.flwr.federations.local-simulation.options]
-num-supernodes = 100
+[tool.flwr.federations]
+default = "local-simulation"
 
-[tool.hatch.build.targets.wheel]
-packages = [ ".",]
+[tool.flwr.federations.local-simulation]
+options.num-supernodes = 100
+
+[tool.flower.simulation]
+num_clients = 100

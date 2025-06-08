@@ -94,16 +94,16 @@ def main():
         cifar_experiments = []
         mnist_experiments = []
         
-        """  # CIFAR-10 (500 rounds)
+         # CIFAR-10 (500 rounds)
         for alpha in [0.3, 1000]:
             for initial_ff in [0.05, 0.1]:
                 # AFF V4 - Algoritmo original puro
-                cifar_experiments.append(("CIFAR10", 500, initial_ff, alpha, "linear", None, None, False)) """
+                cifar_experiments.append(("CIFAR10", 500, initial_ff, alpha, "linear", None, None, False))
         
-        # MNIST (250 rounds)
+        """  # MNIST (250 rounds)
         for alpha in [0.3, 1000]:
             for initial_ff in [0.05, 0.1]:
-                mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "linear", None, None, False))
+                mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "linear", None, None, False)) """
         
         # Combina experimentos (CIFAR-10 primeiro conforme solicitado)
         all_experiments = cifar_experiments + mnist_experiments

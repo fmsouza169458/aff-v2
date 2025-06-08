@@ -1,9 +1,12 @@
 EXPERIMENTOS
-Início: 2025-06-07 15:12:54.505396
+Início: 2025-06-08 00:29:44.517374
 Total de experimentos: 4
 
 Configurações:
-1. MNIST - Rounds:250 - FF:0.05 - Alpha:0.3 - Regression:linear
-2. MNIST - Rounds:250 - FF:0.1 - Alpha:0.3 - Regression:linear
-3. MNIST - Rounds:250 - FF:0.05 - Alpha:1000 - Regression:linear
-4. MNIST - Rounds:250 - FF:0.1 - Alpha:1000 - Regression:linear
+1. CIFAR10 - Rounds:500 - FF:0.05 - Alpha:0.3 - Regression:linear
+2. CIFAR10 - Rounds:500 - FF:0.1 - Alpha:0.3 - Regression:linear
+3. CIFAR10 - Rounds:500 - FF:0.05 - Alpha:1000 - Regression:linear
+4. CIFAR10 - Rounds:500 - FF:0.1 - Alpha:1000 - Regression:linear
+
+Fim dos experimentos: 2025-06-08 13:51:29.717513
+Duração total: 13:21:45.200139
