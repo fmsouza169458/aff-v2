@@ -363,7 +363,7 @@ class AffWithHet(FedAvg):
         alpha = os.getenv("ALPHA", "unknown")
         strategy = os.getenv("STRATEGY", "unknown")
 
-        filename = f"TESTE_SEED_2_{dataset}_ff{initial_ff}_alpha{alpha}_{strategy}.json"
+        filename = f"TESTE_SEED_3_{dataset}_ff{initial_ff}_alpha{alpha}_{strategy}.json"
 
         with open(filename, "w") as f:
             json.dump(self.results_to_save, f, indent=4)
