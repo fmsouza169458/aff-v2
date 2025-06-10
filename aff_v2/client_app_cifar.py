@@ -2,6 +2,7 @@
 
 import torch
 from aff_v2.task_cifar import Net, get_weights, load_data, set_weights, test, train
+from aff_v2.utils import set_seed
 
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context, ConfigRecord
@@ -69,6 +70,7 @@ class FlowerClient(NumPyClient):
 
 def client_fn(context: Context):
     """Construct a Client that will be run in a ClientApp."""
+    set_seed(context.run_config["seed"])
 
     # Read the node_config to fetch data partition associated to this node
     partition_id = context.node_config["partition-id"]

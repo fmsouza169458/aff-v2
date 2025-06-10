@@ -32,6 +32,7 @@ min-available-clients = 100
 alpha-dirichlet = 1000
 batch-size = 32
 learning-rate = 0.005
+seed = 50
 
 [tool.flwr.federations]
 default = "local-simulation"

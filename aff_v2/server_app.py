@@ -12,6 +12,7 @@ from aff_v2.task_mnist import Net as mnist_net, get_weights as mnist_get_weights
 from aff_v2.fedavgg_constant import FedAvgWithLogging
 from aff_v2.aff_with_gaussian import AffWithGaussian
 from aff_v2.aff_with_het import AffWithHet
+from aff_v2.utils import set_seed
 
 def get_evaluate_fn(testloader, device, net_function, set_weights_function, test_function):
     def evaluate(server_round, parameters_ndarrays, config):
@@ -83,6 +84,8 @@ def get_strategy_config() -> dict:
 
 
 def server_fn(context: Context):
+    set_seed(context.run_config["seed"])
+    
     num_rounds = context.run_config["num-server-rounds"]
     fraction_fit = context.run_config["fraction-fit"]
      

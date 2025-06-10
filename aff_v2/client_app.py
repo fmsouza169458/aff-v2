@@ -5,7 +5,7 @@ from flwr.common import Context, ConfigRecord
 #from aff_v2.task import Net, get_weights, load_data, set_weights, test, train
 
 from aff_v2.task_mnist import Net, get_weights, load_data, set_weights, test, train
-
+from aff_v2.utils import set_seed
 
 import json
 
@@ -80,6 +80,8 @@ class FlowerClient(NumPyClient):
 
 def client_fn(context: Context):
     """A function that returns a Client."""
+    set_seed(context.run_config["seed"])
+    
     # Instantiate the model
     net = Net()
     # Read node config and fetch data for the ClientApp that is being constructed

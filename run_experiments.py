@@ -93,17 +93,17 @@ def main():
     try:
         cifar_experiments = []
         mnist_experiments = []
+
+         # MNIST (250 rounds)
+        for alpha in [0.3, 1000]:
+            for initial_ff in [0.05, 0.1]:
+                mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "linear", None, None, False))
         
          # CIFAR-10 (500 rounds)
         for alpha in [0.3, 1000]:
             for initial_ff in [0.05, 0.1]:
                 # AFF V4 - Algoritmo original puro
                 cifar_experiments.append(("CIFAR10", 500, initial_ff, alpha, "linear", None, None, False))
-        
-        """  # MNIST (250 rounds)
-        for alpha in [0.3, 1000]:
-            for initial_ff in [0.05, 0.1]:
-                mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "linear", None, None, False)) """
         
         # Combina experimentos (CIFAR-10 primeiro conforme solicitado)
         all_experiments = cifar_experiments + mnist_experiments
@@ -129,18 +129,18 @@ def main():
                     f.write(" (heterogeneity:True)")
                 f.write("\n")
         
-        # Executa CIFAR-10
-        print(f"EXECUTANDO EXPERIMENTOS CIFAR-10 ({len(cifar_experiments)}/{len(all_experiments)})")
-        for i, exp in enumerate(cifar_experiments, 1):
-            print(f"\n[{i}/{len(cifar_experiments)}] Executando experimento CIFAR-10...")
-            run_experiment(exp)
-        
-        print(f"\n✅ CIFAR-10 CONCLUÍDO! Agora executando MNIST...")
-        
         # Executa MNIST
         print(f"EXECUTANDO EXPERIMENTOS MNIST ({len(mnist_experiments)}/{len(all_experiments)})")
         for i, exp in enumerate(mnist_experiments, 1):
             print(f"\n[{i}/{len(mnist_experiments)}] Executando experimento MNIST...")
+            run_experiment(exp)
+
+        print(f"\n✅ MNIST CONCLUÍDO! Agora executando CIFAR-10...")
+
+        # Executa CIFAR-10
+        print(f"EXECUTANDO EXPERIMENTOS CIFAR-10 ({len(cifar_experiments)}/{len(all_experiments)})")
+        for i, exp in enumerate(cifar_experiments, 1):
+            print(f"\n[{i}/{len(cifar_experiments)}] Executando experimento CIFAR-10...")
             run_experiment(exp)
         
         end_time = datetime.now()
