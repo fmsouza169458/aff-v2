@@ -51,22 +51,27 @@ def run_experiment(params):
         os.environ["DATASET"] = dataset
         os.environ["INITIAL_FF"] = str(initial_ff)
         os.environ["ALPHA"] = str(alpha)
-        os.environ["STRATEGY"] = "AFF_V4"
-        os.environ["POLYNOMIAL_DEGREE"] = "1"
-        os.environ["MAX_WINDOW_SIZE"] = "20"
-        os.environ["MIN_WINDOW_SIZE"] = "2"
-        os.environ["USE_HETEROGENEITY"] = str(use_heterogeneity).lower()
-        os.environ["REGRESSION_TYPE"] = regression_type
         
-        if gaussian_sigma is not None:
-            os.environ["GAUSSIAN_SIGMA"] = str(gaussian_sigma)
-        if ewma_alpha is not None:
-            os.environ["EWMA_ALPHA"] = str(ewma_alpha)
+        # Define a estratégia baseada nos parâmetros
+        if regression_type == "constant":
+            os.environ["STRATEGY"] = "CONSTANT"
+        else:
+            os.environ["STRATEGY"] = "AFF_V4"
+            os.environ["POLYNOMIAL_DEGREE"] = "1"
+            os.environ["MAX_WINDOW_SIZE"] = "20"
+            os.environ["MIN_WINDOW_SIZE"] = "2"
+            os.environ["USE_HETEROGENEITY"] = str(use_heterogeneity).lower()
+            os.environ["REGRESSION_TYPE"] = regression_type
             
-        if use_heterogeneity:
-            os.environ["HET_WEIGHT_COSINE"] = "0.4"
-            os.environ["HET_WEIGHT_VARIANCE"] = "0.3"
-            os.environ["HET_WEIGHT_WASSERSTEIN"] = "0.3"
+            if gaussian_sigma is not None:
+                os.environ["GAUSSIAN_SIGMA"] = str(gaussian_sigma)
+            if ewma_alpha is not None:
+                os.environ["EWMA_ALPHA"] = str(ewma_alpha)
+                
+            if use_heterogeneity:
+                os.environ["HET_WEIGHT_COSINE"] = "0.4"
+                os.environ["HET_WEIGHT_VARIANCE"] = "0.3"
+                os.environ["HET_WEIGHT_WASSERSTEIN"] = "0.3"
         
         kill_ray_processes()
         
@@ -97,13 +102,18 @@ def main():
          # MNIST (250 rounds)
         for alpha in [0.3, 1000]:
             for initial_ff in [0.05, 0.1]:
-                mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "linear", None, None, False))
-        
+                #mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "linear", None, None, False))
+                
+                mnist_experiments.append(("MNIST", 250, initial_ff, alpha, "constant", None, None, False))
+
+
          # CIFAR-10 (500 rounds)
         for alpha in [0.3, 1000]:
             for initial_ff in [0.05, 0.1]:
                 # AFF V4 - Algoritmo original puro
-                cifar_experiments.append(("CIFAR10", 500, initial_ff, alpha, "linear", None, None, False))
+                # cifar_experiments.append(("CIFAR10", 500, initial_ff, alpha, "linear", None, None, False))
+                # CONSTANT - FedAvg com logging
+                cifar_experiments.append(("CIFAR10", 500, initial_ff, alpha, "constant", None, None, False))
         
         # Combina experimentos (CIFAR-10 primeiro conforme solicitado)
         all_experiments = cifar_experiments + mnist_experiments
@@ -122,11 +132,14 @@ def main():
             for i, exp in enumerate(all_experiments, 1):
                 dataset, rounds, ff, alpha, reg_type, sigma, ewma_alpha, use_het = exp
                 f.write(f"{i}. {dataset} - Rounds:{rounds} - FF:{ff} - Alpha:{alpha} - ")
-                f.write(f"Regression:{reg_type}")
-                if reg_type == "gaussian":
-                    f.write(f" (sigma:{sigma})")
-                elif use_het:
-                    f.write(" (heterogeneity:True)")
+                if reg_type == "constant":
+                    f.write("Strategy:CONSTANT")
+                else:
+                    f.write(f"Regression:{reg_type}")
+                    if reg_type == "gaussian":
+                        f.write(f" (sigma:{sigma})")
+                    elif use_het:
+                        f.write(" (heterogeneity:True)")
                 f.write("\n")
         
         # Executa MNIST
