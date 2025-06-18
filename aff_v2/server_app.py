@@ -51,14 +51,6 @@ def get_strategy_config() -> dict:
     seed = int(os.getenv("SEED", "unknown"))
     gaussian_sigma = float(os.getenv("GAUSSIAN_SIGMA", "1.0"))
 
-    heterogeneity_moderation_factor = float(os.getenv("HETEROGENEITY_MODERATION_FACTOR", "0.3"))
-    
-    heterogeneity_weights = None
-    if use_heterogeneity:
-        heterogeneity_weights = {
-            "cosine": float(os.getenv("HET_WEIGHT_COSINE", "0.4")),
-            "variance": float(os.getenv("HET_WEIGHT_VARIANCE", "0.6"))
-        }
     
     config = {
         "dataset": dataset,
@@ -70,8 +62,6 @@ def get_strategy_config() -> dict:
         "max_window_size": max_window_size,
         "min_window_size": min_window_size,
         "use_heterogeneity": use_heterogeneity,
-        "heterogeneity_weights": heterogeneity_weights,
-        "heterogeneity_moderation_factor": heterogeneity_moderation_factor,
         "regression_type": regression_type,
         "gaussian_sigma": gaussian_sigma,
         "seed": seed

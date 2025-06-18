@@ -11,9 +11,6 @@ export MAX_WINDOW_SIZE="20"
 export MIN_WINDOW_SIZE="2"
 export USE_HETEROGENEITY="true"
 export REGRESSION_TYPE="linear"
-export HET_WEIGHT_COSINE="0.4"
-export HET_WEIGHT_VARIANCE="0.3"
-export HET_WEIGHT_WASSERSTEIN="0.3"
 
 datasets=("CIFAR10" "MNIST")
 initial_ffs=("0.1" "0.05")
