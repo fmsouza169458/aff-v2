@@ -50,5 +50,4 @@ for i in {1..3}; do
     done
 done
 
-echo "Todos os experimentos foram concluídos em $(date)!" >> experiments_log.txt
 echo "Todos os experimentos foram concluídos!"
