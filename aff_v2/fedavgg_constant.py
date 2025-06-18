@@ -39,8 +39,9 @@ class FedAvgWithLogging(FedAvg):
         initial_ff = os.getenv("INITIAL_FF", "unknown")
         alpha = os.getenv("ALPHA", "unknown")
         strategy = os.getenv("STRATEGY", "unknown")
+        seed = os.getenv("SEED", "unknown")
 
-        filename = f"TESTE_FEDAVGG_CONSTANT_1_{dataset}_ff{initial_ff}_alpha{alpha}_{strategy}.json"
+        filename = f"RESULT_SEED_{seed}_{dataset}_ff{initial_ff}_alpha{alpha}_{strategy}_CONSTANT.json"
 
         with open(filename, "w") as f:
             json.dump(self.results_to_save, f, indent=4)

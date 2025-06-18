@@ -12,6 +12,7 @@ from aff_v2.task_mnist import Net as mnist_net, get_weights as mnist_get_weights
 from aff_v2.fedavgg_constant import FedAvgWithLogging
 from aff_v2.aff_with_gaussian import AffWithGaussian
 from aff_v2.aff_with_het import AffWithHet
+from aff_v2.aff_without_het import AffWithoutHet
 from aff_v2.utils import set_seed
 
 def get_evaluate_fn(testloader, device, net_function, set_weights_function, test_function):
@@ -30,15 +31,6 @@ def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
     return {"accuracy": sum(accuracies) / total_examples}
 
 
-def handle_fit_metrics(metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    b_values = []
-    for _, m in metrics:
-        my_metric_str = m["my_metric"]
-        my_metric = json.loads(my_metric_str)
-        b_values.append(my_metric["b"])
-    return {"max_b": max(b_values)}
-
-
 def on_fit_config(server_round: int) -> Metrics:
     lr = 0.01
     if server_round > 2:
@@ -48,14 +40,17 @@ def on_fit_config(server_round: int) -> Metrics:
 def get_strategy_config() -> dict:
     dataset = os.getenv("DATASET", "MNIST")
     initial_ff = float(os.getenv("INITIAL_FF", "0.1"))
+    rounds = int(os.getenv("ROUNDS", "250"))
     alpha = float(os.getenv("ALPHA", "0.3"))
-    strategy_type = os.getenv("STRATEGY", "AFF_V4")
+    strategy_type = os.getenv("STRATEGY", "AFF_V2")
     polynomial_degree = int(os.getenv("POLYNOMIAL_DEGREE", "1"))
     max_window_size = int(os.getenv("MAX_WINDOW_SIZE", "20"))
     min_window_size = int(os.getenv("MIN_WINDOW_SIZE", "2"))
     use_heterogeneity = os.getenv("USE_HETEROGENEITY", "false").lower() == "true"
     regression_type = os.getenv("REGRESSION_TYPE", "gaussian")
+    seed = int(os.getenv("SEED", "unknown"))
     gaussian_sigma = float(os.getenv("GAUSSIAN_SIGMA", "1.0"))
+
     heterogeneity_moderation_factor = float(os.getenv("HETEROGENEITY_MODERATION_FACTOR", "0.3"))
     
     heterogeneity_weights = None
@@ -67,6 +62,7 @@ def get_strategy_config() -> dict:
     
     config = {
         "dataset": dataset,
+        "rounds": rounds,
         "initial_ff": initial_ff,
         "alpha": alpha,
         "strategy_type": strategy_type,
@@ -77,19 +73,19 @@ def get_strategy_config() -> dict:
         "heterogeneity_weights": heterogeneity_weights,
         "heterogeneity_moderation_factor": heterogeneity_moderation_factor,
         "regression_type": regression_type,
-        "gaussian_sigma": gaussian_sigma
+        "gaussian_sigma": gaussian_sigma,
+        "seed": seed
     }
     
     return config
 
 
 def server_fn(context: Context):
-    set_seed(context.run_config["seed"])
-    
-    num_rounds = context.run_config["num-server-rounds"]
-    fraction_fit = context.run_config["fraction-fit"]
-     
     strategy_config = get_strategy_config()
+
+    set_seed(strategy_config["seed"])
+
+    num_rounds = strategy_config["rounds"]
 
     if strategy_config["dataset"] == "MNIST":
         ndarrays = mnist_get_weights(mnist_net())
@@ -113,38 +109,32 @@ def server_fn(context: Context):
         test_function = cifar_test
 
     if strategy_config["strategy_type"] == "AFF_V2":
-        strategy = AffWithGaussian(
-            initial_parameters=parameters,
-            evaluate_metrics_aggregation_fn=weighted_average,
-            fit_metrics_aggregation_fn=handle_fit_metrics,
-            on_fit_config_fn=on_fit_config,
-            evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
-            min_available_clients=100,
-            max_participants=100,
-            number_of_participants=int(100*strategy_config["initial_ff"]),
-            degree=strategy_config["polynomial_degree"],
-            max_window_size=strategy_config["max_window_size"],
-            min_window_size=strategy_config["min_window_size"],
-            use_heterogeneity=strategy_config["use_heterogeneity"],
-            heterogeneity_weights=strategy_config["heterogeneity_weights"],
-            heterogeneity_moderation_factor=strategy_config["heterogeneity_moderation_factor"],
-            regression_type=strategy_config["regression_type"],
-            gaussian_sigma=strategy_config["gaussian_sigma"]
-        )
-    elif strategy_config["strategy_type"] == "AFF_V4":
-        strategy = AffWithHet(
-            initial_parameters=parameters,
-            evaluate_metrics_aggregation_fn=weighted_average,
-            fit_metrics_aggregation_fn=handle_fit_metrics,
-            on_fit_config_fn=on_fit_config,
-            evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
-            min_available_clients=100,
-            max_clients=100,
-            initial_clients=int(100*strategy_config["initial_ff"]),
-            degree=strategy_config["polynomial_degree"],
-            max_window_size=strategy_config["max_window_size"],
-            min_window_size=strategy_config["min_window_size"]
-        )
+        if strategy_config["use_heterogeneity"]:
+            strategy = AffWithHet(
+                initial_parameters=parameters,
+                evaluate_metrics_aggregation_fn=weighted_average,
+                on_fit_config_fn=on_fit_config,
+                evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
+                min_available_clients=100,
+                max_clients=100,
+                initial_clients=int(100*strategy_config["initial_ff"]),
+                degree=strategy_config["polynomial_degree"],
+                max_window_size=strategy_config["max_window_size"],
+                min_window_size=strategy_config["min_window_size"]
+            )
+        else:
+            strategy = AffWithoutHet(
+                initial_parameters=parameters,
+                evaluate_metrics_aggregation_fn=weighted_average,
+                on_fit_config_fn=on_fit_config,
+                evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
+                min_available_clients=100,
+                max_clients=100,
+                initial_clients=int(100*strategy_config["initial_ff"]),
+                degree=strategy_config["polynomial_degree"],
+                max_window_size=strategy_config["max_window_size"],
+                min_window_size=strategy_config["min_window_size"]
+            )
     elif strategy_config["strategy_type"] == "CONSTANT":
         strategy = FedAvgWithLogging(
             fraction_fit=strategy_config["initial_ff"],
@@ -153,7 +143,6 @@ def server_fn(context: Context):
             on_fit_config_fn=on_fit_config,
             initial_parameters=parameters,
         ) 
-
 
     config = ServerConfig(num_rounds=num_rounds)
 
