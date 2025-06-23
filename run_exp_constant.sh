@@ -10,7 +10,7 @@ export STRATEGY="CONSTANT"
 export MAX_WINDOW_SIZE="20"
 export MIN_WINDOW_SIZE="2"
 
-datasets=("MNIST" "CIFAR10")
+datasets=("CIFAR10")
 initial_ffs=("0.1" "0.05")
 alphas=("0.3" "1000")
 
@@ -29,6 +29,7 @@ for i in {1..3}; do
                 export DATASET="$dataset"
                 export INITIAL_FF="$ff"
                 export ALPHA="$alpha"
+                export ROUNDS="$num_rounds"
                 export SEED="$i"
                 
                 log_file="logs/exp_${STRATEGY}_${DATASET}_ff${ff}_alpha${alpha}_seed${i}.log"
