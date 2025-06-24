@@ -168,7 +168,7 @@ class AffWithHet(FedAvg):
             print(f"  - Performance factor: {performance_factor:.4f}")
                         
             if performance_factor >= 0:
-                target_reduction_rate = performance_factor * (1.0 - self.latest_heterogeneity * 0.3)
+                target_reduction_rate = performance_factor * (1.0 - self.latest_heterogeneity * 0.4)
                 print(f"  - Good performance, target reduction rate: {target_reduction_rate:.4f}")
             else:
                 target_reduction_rate = -self.latest_heterogeneity
