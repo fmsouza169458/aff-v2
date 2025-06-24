@@ -5,6 +5,7 @@ from flwr.common import Context, ndarrays_to_parameters, Metrics
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from torch.utils.data import DataLoader
 from datasets import load_dataset
+import torch
 
 from aff_v2.task_cifar import Net as cifar_net, get_weights as cifar_get_weights, set_weights as cifar_set_weights, test as cifar_test, get_transforms as cifar_get_transforms
 from aff_v2.task_mnist import Net as mnist_net, get_weights as mnist_get_weights, set_weights as mnist_set_weights, test as mnist_test, get_transforms as mnist_get_transforms
@@ -138,5 +139,9 @@ def server_fn(context: Context):
 
     return ServerAppComponents(strategy=strategy, config=config)
 
+# Limit the number of threads used for intra-op parallelism
+torch.set_num_threads(4) #4 threads in dl28 machine achieves the same performance with resource limitation
+# Limit the number of threads used for inter-op parallelism (e.g., for parallel calls to different operators)
+torch.set_num_interop_threads(2) #2 threads in dl28 machine achieves the same performance with resource limitation
 
 app = ServerApp(server_fn=server_fn)

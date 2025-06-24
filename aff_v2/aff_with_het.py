@@ -76,8 +76,13 @@ class AffWithHet(FedAvg):
         print(f"  - Current round: {round_num}")
         print(f"  - Next update round: {self.next_round_update}")
         print(f"  - Should update: {self.next_round_update == round_num}")
+    
+        if round_num == 1:
+            self.next_round_update += self.window_size
+            return self.number_of_participants
         
         if self.next_round_update == round_num:
+
             self.fit_polynomial_regression()
             self.update_change_direction()
 
@@ -163,7 +168,7 @@ class AffWithHet(FedAvg):
             print(f"  - Performance factor: {performance_factor:.4f}")
                         
             if performance_factor >= 0:
-                target_reduction_rate = performance_factor * (1.0 - self.latest_heterogeneity * 0.5)
+                target_reduction_rate = performance_factor * (1.0 - self.latest_heterogeneity * 0.3)
                 print(f"  - Good performance, target reduction rate: {target_reduction_rate:.4f}")
             else:
                 target_reduction_rate = -self.latest_heterogeneity
