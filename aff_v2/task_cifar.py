@@ -190,6 +190,81 @@ def train(net, trainloader, valloader, epochs, learning_rate, device):
     return results
 
 
+def train_with_gradient_norms(net, trainloader, valloader, epochs, learning_rate, device):
+    net.to(device)
+    net.train()
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    
+    optimizer = torch.optim.SGD(
+        net.parameters(),
+        lr=learning_rate,
+        momentum=0.9,
+        weight_decay=5e-4,
+        nesterov=True
+    )
+    
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer,
+        T_max=epochs,
+        eta_min=learning_rate * 0.01
+    )
+    
+    gradient_norms = []
+    losses = []
+    
+    for epoch in range(epochs):
+        epoch_loss_avg = 0.0
+        sum_norms = 0.0
+        batch_count = 0
+        
+        for batch in trainloader:
+            images = batch["img"].to(device)
+            labels = batch["label"].to(device)
+            
+            optimizer.zero_grad()
+            predictions = net(images)
+            loss = criterion(predictions, labels)
+            loss.backward()
+            
+            gradients = []
+            for param in net.parameters():
+                if param.grad is not None:
+                    gradients.append(torch.flatten(param.grad))
+            
+            if gradients:
+                gradient_norm = torch.norm(torch.cat(gradients))
+                sum_norms += gradient_norm.item()
+            else:
+                sum_norms += 0.0
+            
+            optimizer.step()
+            epoch_loss_avg += loss.item()
+            batch_count += 1
+            
+        scheduler.step()
+        
+        if batch_count > 0:
+            gradient_norms.append(sum_norms / batch_count)
+            losses.append(epoch_loss_avg / batch_count)
+    
+    avg_loss = sum(losses) / len(losses) if losses else 0.0
+    avg_gradient_norm = sum(gradient_norms) / len(gradient_norms) if gradient_norms else 0.0
+    
+    local_fgn = avg_gradient_norm * learning_rate
+    
+    train_loss, train_acc = test(net, trainloader, device)
+    val_loss, val_acc = test(net, valloader, device)
+
+    results = {
+        "train_loss": train_loss,
+        "train_accuracy": train_acc,
+        "val_loss": val_loss,
+        "val_accuracy": val_acc,
+        "local_fgn": local_fgn
+    }
+    return results
+
+
 def test(net, testloader, device):
     """Validate the model on the test set."""
     net.to(device)

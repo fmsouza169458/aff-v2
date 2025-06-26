@@ -5,11 +5,10 @@ source venv/bin/activate
 
 pip install -r requirements.txt
 
-export STRATEGY="CONSTANT"
-export MAX_WINDOW_SIZE="20"
-export MIN_WINDOW_SIZE="2"
+export STRATEGY="CRITICAL_FL"
+export FGN_THRESHOLD="0.01"
 
-datasets=("CIFAR10")
+datasets=("MNIST" "CIFAR10")
 initial_ffs=("0.1" "0.05")
 alphas=("0.3" "1000")
 
@@ -22,9 +21,9 @@ mkdir -p logs
 for i in {1..3}; do
     for dataset in "${datasets[@]}"; do
         num_rounds=${rounds[$dataset]}
-
+        
         for ff in "${initial_ffs[@]}"; do
-            for alpha in "${alphas[@]}"; do   
+            for alpha in "${alphas[@]}"; do
                 export DATASET="$dataset"
                 export INITIAL_FF="$ff"
                 export ALPHA="$alpha"
@@ -38,7 +37,7 @@ for i in {1..3}; do
                 else
                     echo "❌ ERRO no experimento" >> experiments_log.txt
                 fi
-
+                
                 sleep 10
             done
         done

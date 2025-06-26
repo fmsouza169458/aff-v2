@@ -104,6 +104,56 @@ def train(net, trainloader, epochs, device, lr):
     return avg_trainloss
 
 
+def train_with_gradient_norms(net, trainloader, epochs, device, lr):
+    net.to(device)
+    criterion = torch.nn.CrossEntropyLoss().to(device)
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    net.train()
+    
+    gradient_norms = []
+    losses = []
+    
+    for epoch in range(epochs):
+        epoch_loss_avg = 0.0
+        sum_norms = 0.0
+        batch_count = 0
+        
+        for batch in trainloader:
+            images = batch["image"].to(device)
+            labels = batch["label"].to(device)
+            
+            optimizer.zero_grad()
+            predictions = net(images)
+            loss = criterion(predictions, labels)
+            loss.backward()
+            
+            gradients = []
+            for param in net.parameters():
+                if param.grad is not None:
+                    gradients.append(torch.flatten(param.grad))
+            
+            if gradients: 
+                gradient_norm = torch.norm(torch.cat(gradients))
+                sum_norms += gradient_norm.item()
+            else:
+                sum_norms += 0.0
+            
+            optimizer.step()
+            epoch_loss_avg += loss.item()
+            batch_count += 1
+            
+        if batch_count > 0:
+            gradient_norms.append(sum_norms / batch_count)
+            losses.append(epoch_loss_avg / batch_count)
+    
+    avg_loss = sum(losses) / len(losses) if losses else 0.0
+    avg_gradient_norm = sum(gradient_norms) / len(gradient_norms) if gradient_norms else 0.0
+    
+    local_fgn = avg_gradient_norm * lr
+    
+    return avg_loss, local_fgn
+
+
 def test(net, testloader, device):
     """Validate the model on the test set.
 

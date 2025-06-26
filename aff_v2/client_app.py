@@ -5,12 +5,11 @@ from flwr.common import Context, ConfigRecord
 import json
 import os
 
-# Importa condicionalmente baseado na variável de ambiente DATASET
 DATASET = os.getenv("DATASET", "MNIST")
 if DATASET == "CIFAR10":
-    from aff_v2.task_cifar import Net, get_weights, load_data, set_weights, test, train
-else:  # MNIST
-    from aff_v2.task_mnist import Net, get_weights, load_data, set_weights, test, train
+    from aff_v2.task_cifar import Net, get_weights, load_data, set_weights, test, train, train_with_gradient_norms
+else:
+    from aff_v2.task_mnist import Net, get_weights, load_data, set_weights, test, train, train_with_gradient_norms
 
 from aff_v2.utils import set_seed
 
@@ -26,6 +25,7 @@ class FlowerClient(NumPyClient):
         self.dataset = os.getenv("DATASET", "MNIST")
         
         self.learning_rate = context.run_config.get("learning-rate", 0.01)
+        self.strategy = os.getenv("STRATEGY", "AFF_V2")
 
         if "fit_metrics" not in self.client_state.config_records:
             self.client_state.config_records["fit_metrics"] = ConfigRecord()
@@ -34,40 +34,70 @@ class FlowerClient(NumPyClient):
         """Train the model with data of this client."""
         set_weights(self.net, parameters)
         
-        if self.dataset == "CIFAR10":
-            train_metrics = train(
-                self.net,
-                self.trainloader,
-                self.valloader,
-                epochs=1,
-                learning_rate=self.learning_rate,
-                device=self.device,
+        if self.strategy == "CRITICAL_FL":
+            if self.dataset == "CIFAR10":
+                train_metrics = train_with_gradient_norms(
+                    self.net,
+                    self.trainloader,
+                    self.valloader,
+                    epochs=1,
+                    learning_rate=self.learning_rate,
+                    device=self.device,
+                )
+                train_loss = train_metrics["train_loss"]
+                local_fgn = train_metrics.get("local_fgn", 0.0)
+            else:
+                train_loss, local_fgn = train_with_gradient_norms(
+                    self.net,
+                    self.trainloader,
+                    self.local_epochs,
+                    device=self.device,
+                    lr=config["lr"],
+                )
+            
+            return (
+                get_weights(self.net),
+                len(self.trainloader.dataset),
+                {
+                    "train_loss": train_loss,
+                    "local_fgn": local_fgn,
+                },
             )
-            train_loss = train_metrics["train_loss"]
         else:
-            train_loss = train(
-                self.net,
-                self.trainloader,
-                self.local_epochs,
-                device=self.device,
-                lr=config["lr"],
+            if self.dataset == "CIFAR10":
+                train_metrics = train(
+                    self.net,
+                    self.trainloader,
+                    self.valloader,
+                    epochs=1,
+                    learning_rate=self.learning_rate,
+                    device=self.device,
+                )
+                train_loss = train_metrics["train_loss"]
+            else:
+                train_loss = train(
+                    self.net,
+                    self.trainloader,
+                    self.local_epochs,
+                    device=self.device,
+                    lr=config["lr"],
+                )
+
+            fit_metrics = self.client_state.config_records["fit_metrics"]
+            if "train_loss_hist" not in fit_metrics:
+                if train_loss is not None:
+                    fit_metrics["train_loss_hist"] = [train_loss]
+            else:
+                if train_loss is not None:
+                    fit_metrics["train_loss_hist"].append(train_loss)
+
+            return (
+                get_weights(self.net),
+                len(self.trainloader.dataset),
+                {
+                    "train_loss": train_loss,
+                },
             )
-
-        fit_metrics = self.client_state.config_records["fit_metrics"]
-        if "train_loss_hist" not in fit_metrics:
-            if train_loss is not None:
-                fit_metrics["train_loss_hist"] = [train_loss]
-        else:
-            if train_loss is not None:
-                fit_metrics["train_loss_hist"].append(train_loss)
-
-        return (
-            get_weights(self.net),
-            len(self.trainloader.dataset),
-            {
-                "train_loss": train_loss,
-            },
-        )
 
     def evaluate(self, parameters, config):
         """Evaluate the model on the data this client has."""

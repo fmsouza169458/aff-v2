@@ -14,6 +14,7 @@ from aff_v2.fedavgg_constant import FedAvgWithLogging
 from aff_v2.aff_with_gaussian import AffWithGaussian
 from aff_v2.aff_with_het import AffWithHet
 from aff_v2.aff_without_het import AffWithoutHet
+from aff_v2.critical_fl import CriticalFL
 from aff_v2.utils import set_seed
 
 def get_evaluate_fn(testloader, device, net_function, set_weights_function, test_function):
@@ -51,6 +52,7 @@ def get_strategy_config() -> dict:
     regression_type = os.getenv("REGRESSION_TYPE", "gaussian")
     seed = int(os.getenv("SEED", "unknown"))
     gaussian_sigma = float(os.getenv("GAUSSIAN_SIGMA", "1.0"))
+    fgn_threshold = float(os.getenv("FGN_THRESHOLD", "0.01"))
 
     
     config = {
@@ -65,6 +67,7 @@ def get_strategy_config() -> dict:
         "use_heterogeneity": use_heterogeneity,
         "regression_type": regression_type,
         "gaussian_sigma": gaussian_sigma,
+        "fgn_threshold": fgn_threshold,
         "seed": seed
     }
     
@@ -126,6 +129,18 @@ def server_fn(context: Context):
                 max_window_size=strategy_config["max_window_size"],
                 min_window_size=strategy_config["min_window_size"]
             )
+    elif strategy_config["strategy_type"] == "CRITICAL_FL":
+        strategy = CriticalFL(
+            initial_parameters=parameters,
+            evaluate_metrics_aggregation_fn=weighted_average,
+            on_fit_config_fn=on_fit_config,
+            evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
+            min_available_clients=100,
+            max_clients=100,
+            initial_clients=int(100*strategy_config["initial_ff"]),
+            min_clients=2,
+            fgn_threshold=strategy_config["fgn_threshold"]
+        )
     elif strategy_config["strategy_type"] == "CONSTANT":
         strategy = FedAvgWithLogging(
             fraction_fit=strategy_config["initial_ff"],
