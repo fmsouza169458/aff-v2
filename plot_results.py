@@ -52,6 +52,7 @@ def calculate_mean_final_clients(files):
         total_clients += get_accumulated_clients(data)
     return total_clients / len(files)
 
+
 def calculate_mean_heterogeneity(files):
     all_heterogeneities = []
     if not files:
@@ -74,6 +75,36 @@ def calculate_mean_heterogeneity(files):
     
     return rounds, mean_het, std_het
 
+def calculate_mean_accuracy_progression(files):
+    all_accuracies = []
+    if not files:
+        return np.array([]), np.array([]), np.array([])
+    
+    for file in files:
+        data = load_json(file)
+        rounds = sorted([int(k) for k in data.keys() if k.isdigit() and int(k) > 0])
+        accuracies = []
+        for round_num in rounds:
+            round_data = data[str(round_num)]
+            if 'cen_accuracy' in round_data:
+                accuracies.append(round_data['cen_accuracy'])
+        all_accuracies.append(accuracies)
+    
+    if not all_accuracies:
+        return np.array([]), np.array([]), np.array([])
+    
+    max_len = max(len(acc) for acc in all_accuracies)
+    
+    padded_accuracies = [
+        acc + [np.nan] * (max_len - len(acc)) for acc in all_accuracies
+    ]
+    
+    mean_acc = np.nanmean(padded_accuracies, axis=0)
+    std_acc = np.nanstd(padded_accuracies, axis=0)
+    rounds = np.arange(1, max_len + 1)
+    
+    return rounds, mean_acc, std_acc
+
 def group_files_by_config(files):
     configs = defaultdict(lambda: defaultdict(list))
     
@@ -94,39 +125,110 @@ def group_files_by_config(files):
         if '_HET' in file:
             configs[key]['HET'].append(file)
         
+        if '_CRITICAL_FL' in file:
+            configs[key]['CRITICAL_FL'].append(file)
+        
     return configs
 
-def plot_accuracy_vs_clients(config, constant_files, original_files, het_files):
+def plot_accuracy_vs_clients(config, constant_files, original_files, het_files, critical_fl_files):
     dataset, ff, alpha = config
     
     constant_mean_acc, constant_mean_clients = calculate_mean_accuracy_and_clients(constant_files)
     original_mean_acc, original_mean_clients = calculate_mean_accuracy_and_clients(original_files)
     het_mean_acc, het_mean_clients = calculate_mean_accuracy_and_clients(het_files)
+    critical_fl_mean_acc, critical_fl_mean_clients = calculate_mean_accuracy_and_clients(critical_fl_files)
     
     plt.figure(figsize=(10, 6))
-    plt.plot(constant_mean_clients, constant_mean_acc, 'o-', label='CONSTANT', markersize=2)
-    plt.plot(original_mean_clients, original_mean_acc, 'o-', label='ORIGINAL', markersize=2)
-    plt.plot(het_mean_clients, het_mean_acc, 'o-', label='HET', markersize=2)
+    plt.plot(constant_mean_clients, constant_mean_acc, 'o-', label='Constant', markersize=2)
+    plt.plot(original_mean_clients, original_mean_acc, 'o-', label='AFF', markersize=2)
+    plt.plot(het_mean_clients, het_mean_acc, 'o-', label='HETAAFF', markersize=2)
+    plt.plot(critical_fl_mean_clients, critical_fl_mean_acc, 'o-', label='Critical FL', markersize=2)
     
     plt.title(f'Accuracy vs Accumulated Clients - {dataset} (FF={ff}, Alpha={alpha})')
     plt.xlabel('Accumulated Clients')
     plt.ylabel('Accuracy')
     plt.grid(True)
     plt.legend()
-    plt.savefig(f'graficos/accuracy_{dataset}_ff{ff}_alpha{alpha}_v2.png')
+    plt.savefig(f'graficos/accuracy_{dataset}_ff{ff}_alpha{alpha}_v2.pdf')
     plt.close()
 
-def plot_accumulated_clients(config, constant_files, original_files, het_files):
+def plot_grouped_accumulated_clients(configs):
+    grouped_configs = defaultdict(lambda: defaultdict(dict))
+    
+    for config, files_dict in configs.items():
+        dataset, ff, alpha = config
+        grouped_configs[(dataset, alpha)][ff] = files_dict
+    
+    for (dataset, alpha), ff_data in grouped_configs.items():
+        if len(ff_data) < 2:
+            continue
+            
+        plt.figure(figsize=(12, 6))
+        
+        ff_values = sorted(ff_data.keys())
+        methods = ['Constant', 'AFF', 'HETAAFF', 'Critical FL']
+        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
+        
+        n_methods = len(methods)
+        n_ff = len(ff_values)
+        width = 0.25
+        
+
+        group_positions = np.arange(n_ff) * (n_methods * width + 0.5)
+        
+        for i, method in enumerate(methods):
+            method_clients = []
+            
+            for ff in ff_values:
+                files_dict = ff_data[ff]
+                
+                if method == 'Constant':
+                    files = files_dict.get('CONSTANT', [])
+                elif method == 'AFF':
+                    files = files_dict.get('ORIGINAL', [])
+                elif method == 'HETAAFF':
+                    files = files_dict.get('HET', [])
+                else:
+                    files = files_dict.get('CRITICAL_FL', [])
+                
+                mean_clients = calculate_mean_final_clients(files) if files else 0
+                method_clients.append(mean_clients)
+            
+            positions = group_positions + i * width
+            bars = plt.bar(positions, method_clients, width, 
+                          label=method, color=colors[i], alpha=0.8)
+            
+            for bar in bars:
+                yval = bar.get_height()
+                if yval > 0:
+                    plt.text(bar.get_x() + bar.get_width()/2.0, yval, 
+                            f'{yval:.0f}', va='bottom', ha='center', fontsize=9)
+        
+        plt.title(f'Accumulated Clients - {dataset} (Alpha={alpha})')
+        plt.ylabel('Number of Clients')
+        plt.xlabel('Fit Fraction')
+        
+        group_centers = group_positions + (n_methods - 1) * width / 2
+        plt.xticks(group_centers, [f'FF={ff}' for ff in ff_values])
+        
+        plt.legend()
+        plt.grid(True, axis='y', alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(f'graficos/clients_{dataset}_alpha{alpha}_grouped_v2.pdf')
+        plt.close()
+
+def plot_accumulated_clients(config, constant_files, original_files, het_files, critical_fl_files):
     dataset, ff, alpha = config
     
     constant_mean = calculate_mean_final_clients(constant_files)
     original_mean = calculate_mean_final_clients(original_files)
     het_mean = calculate_mean_final_clients(het_files)
+    critical_fl_mean = calculate_mean_final_clients(critical_fl_files)
     
     plt.figure(figsize=(8, 6))
-    methods = ['Constant', 'AFF Original', 'AFF With Heterogeneity']
-    clients = [constant_mean, original_mean, het_mean]
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+    methods = ['Constant', 'AFF', 'HETAAFF', 'Critical FL']
+    clients = [constant_mean, original_mean, het_mean, critical_fl_mean]
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
     
     plt.grid(True, axis='y', zorder=0)
     
@@ -138,7 +240,7 @@ def plot_accumulated_clients(config, constant_files, original_files, het_files):
     
     plt.title(f'Accumulated Clients - {dataset} (FF={ff}, Alpha={alpha})')
     plt.ylabel('Number of Clients')
-    plt.savefig(f'graficos/clients_{dataset}_ff{ff}_alpha{alpha}_v2.png')
+    plt.savefig(f'graficos/clients_{dataset}_ff{ff}_alpha{alpha}_v2.pdf')
     plt.close()
 
 def get_max_accuracy(json_data):
@@ -177,21 +279,68 @@ def plot_heterogeneity_comparison(configs):
                 plt.fill_between(rounds, mean_het - std_het, mean_het + std_het, alpha=0.2)
 
         if plt.gca().lines:
-            plt.title(f'Heterogeneity Comparison - {dataset} (Fit Fraction={ff})')
+            plt.title(f'Heterogeneity Comparison - {dataset} (Initial Fit Fraction={ff})')
             plt.xlabel('Rounds')
             plt.ylabel('Heterogeneity')
             plt.grid(True)
             plt.legend()
-            plt.savefig(f'graficos/heterogeneity_comparison_{dataset}_ff{ff}_v2.png')
+            plt.savefig(f'graficos/heterogeneity_comparison_{dataset}_ff{ff}_v2.pdf')
+        
+        plt.close()
+
+def plot_accuracy_progression_for_constant(configs):
+    grouped_by_exp = defaultdict(list)
+    for config, files_dict in configs.items():
+        dataset, ff, alpha = config
+        grouped_by_exp[(dataset, ff)].append((alpha, files_dict))
+
+    for (dataset, ff), alpha_configs in grouped_by_exp.items():
+        plt.figure(figsize=(10, 6))
+        
+        target_alphas = [0.3, 1000.0]
+        colors = ['#1f77b4', '#ff7f0e']
+        
+        plot_count = 0
+        for alpha, files_dict in sorted(alpha_configs, key=lambda x: x[0]):
+            if alpha not in target_alphas:
+                continue
+                
+            constant_files = files_dict.get('CONSTANT')
+            if not constant_files:
+                continue
+            
+            rounds, mean_acc, std_acc = calculate_mean_accuracy_progression(constant_files)
+            
+            if len(rounds) > 0:
+                color = colors[plot_count % len(colors)]
+                plt.plot(rounds, mean_acc, 'o-', label=f'Alpha={alpha}', 
+                        markersize=3, color=color, linewidth=2)
+                plt.fill_between(rounds, mean_acc - std_acc, mean_acc + std_acc, 
+                               alpha=0.2, color=color)
+                plot_count += 1
+
+        if plt.gca().lines:
+            plt.title(f'Accuracy per Round - {dataset} (Initial Fit Fraction={ff})')
+            plt.xlabel('Rounds')
+            plt.ylabel('Accuracy')
+            plt.grid(True, alpha=0.3)
+            plt.legend()
+            plt.ylim(0, 1)
+            plt.tight_layout()
+            plt.savefig(f'graficos/accuracy_progression_constant_{dataset}_ff{ff}_v2.pdf')
         
         plt.close()
 
 def main():
-    files = glob.glob('RESULT_SEED_*_*.json')
+    files = glob.glob('results/RESULT_SEED_*_*.json')
     
     configs = group_files_by_config(files)
     
     plot_heterogeneity_comparison(configs)
+    
+    plot_accuracy_progression_for_constant(configs)
+    
+    plot_grouped_accumulated_clients(configs)
     
     for config, files_dict in configs.items():
         dataset, ff, alpha = config
@@ -200,6 +349,7 @@ def main():
         constant_files = files_dict.get('CONSTANT', [])
         original_files = files_dict.get('ORIGINAL', [])
         het_files = files_dict.get('HET', [])
+        critical_fl_files = files_dict.get('CRITICAL_FL', [])
 
         if constant_files:
             mean_max_acc = calculate_mean_max_accuracy(constant_files)
@@ -212,10 +362,14 @@ def main():
         if het_files:
             mean_max_acc = calculate_mean_max_accuracy(het_files)
             print(f"  Acuracia Maxima (AFF com Heterogeneidade): {mean_max_acc:.4f}")
+
+        if critical_fl_files:
+            mean_max_acc = calculate_mean_max_accuracy(critical_fl_files)
+            print(f"  Acuracia Maxima (Critical FL): {mean_max_acc:.4f}")
         
-        if all([constant_files, original_files, het_files]):
-            plot_accuracy_vs_clients(config, constant_files, original_files, het_files)
-            plot_accumulated_clients(config, constant_files, original_files, het_files)
+        if all([constant_files, original_files, het_files, critical_fl_files]):
+            plot_accuracy_vs_clients(config, constant_files, original_files, het_files, critical_fl_files)
+            plot_accumulated_clients(config, constant_files, original_files, het_files, critical_fl_files)
 
 if __name__ == '__main__':
     main() 
