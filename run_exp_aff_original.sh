@@ -17,8 +17,8 @@ initial_ffs=("0.1" "0.05")
 alphas=("0.3" "1000")
 
 declare -A rounds
-rounds["MNIST"]=250
-rounds["CIFAR10"]=500
+rounds["MNIST"]=100
+rounds["CIFAR10"]=200
 
 mkdir -p logs
 echo "Iniciando experimentos em $(date)" > experiments_log.txt

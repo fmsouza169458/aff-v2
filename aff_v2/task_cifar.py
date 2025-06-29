@@ -90,13 +90,13 @@ def set_weights(net, parameters):
 fds = None  # Cache FederatedDataset
 
 
-def load_data(partition_id: int, num_partitions: int, batch_size: int, alpha_dirichlet: float):
+def load_data(partition_id: int, num_partitions: int, batch_size: int, alpha_dirichlet: float, seed: int):
     """Load partition CIFAR10 data."""
     # Only initialize `FederatedDataset` once
     global fds
     if fds is None:
         partitioner = DirichletPartitioner(
-            num_partitions=num_partitions, partition_by="label", alpha=alpha_dirichlet
+            num_partitions=num_partitions, partition_by="label", alpha=alpha_dirichlet, seed=seed
         )
         fds = FederatedDataset(
             dataset="uoft-cs/cifar10",
@@ -104,7 +104,7 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int, alpha_dir
         )
     partition = fds.load_partition(partition_id)
     # Divide data on each node: 80% train, 20% test
-    partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
+    partition_train_test = partition.train_test_split(test_size=0.2, seed=seed)
     pytorch_transforms = Compose(
         [ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )

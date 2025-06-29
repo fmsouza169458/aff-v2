@@ -12,13 +12,13 @@ export MIN_WINDOW_SIZE="2"
 export USE_HETEROGENEITY="true"
 export REGRESSION_TYPE="linear"
 
-datasets=("CIFAR10" "MNIST")
+datasets=("MNIST" "CIFAR10")
 initial_ffs=("0.1" "0.05")
 alphas=("0.3" "1000")
 
 declare -A rounds
-rounds["MNIST"]=250
-rounds["CIFAR10"]=500
+rounds["MNIST"]=100
+rounds["CIFAR10"]=200
 
 mkdir -p logs
 

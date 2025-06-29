@@ -49,14 +49,14 @@ def get_transforms():
 
 
 fds = None
-def load_data(partition_id: int, num_partitions: int, alpha_dirichlet: float):
+def load_data(partition_id: int, num_partitions: int, alpha_dirichlet: float, seed: int):
     """Load partition FashionMNIST data."""
     # Only initialize `FederatedDataset` once
     print(f"Loading data for partition {partition_id} with alpha {alpha_dirichlet}")
     global fds
     if fds is None:
         partitioner = DirichletPartitioner(
-            num_partitions=num_partitions, partition_by="label", alpha=alpha_dirichlet
+            num_partitions=num_partitions, partition_by="label", alpha=alpha_dirichlet, seed=seed
         )
         fds = FederatedDataset(
             dataset="zalando-datasets/fashion_mnist",
@@ -64,7 +64,7 @@ def load_data(partition_id: int, num_partitions: int, alpha_dirichlet: float):
         )
     partition = fds.load_partition(partition_id)
     # Divide data on each node: 80% train, 20% test
-    partition_train_test = partition.train_test_split(test_size=0.2, seed=42)
+    partition_train_test = partition.train_test_split(test_size=0.2, seed=seed)
 
     partition_train_test = partition_train_test.with_transform(get_transforms())
     trainloader = DataLoader(partition_train_test["train"], batch_size=32, shuffle=True, drop_last=True)

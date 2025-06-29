@@ -120,9 +120,9 @@ def client_fn(context: Context):
     
     if dataset == "CIFAR10":
         batch_size = context.run_config["batch-size"]
-        trainloader, valloader = load_data(partition_id, num_partitions, batch_size, alpha_dirichlet)
+        trainloader, valloader = load_data(partition_id, num_partitions, batch_size, alpha_dirichlet, seed)
     else:
-        trainloader, valloader = load_data(partition_id, num_partitions, alpha_dirichlet)
+        trainloader, valloader = load_data(partition_id, num_partitions, alpha_dirichlet, seed)
     
     local_epochs = context.run_config["local-epochs"]
 
