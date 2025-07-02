@@ -1,0 +1,706 @@
+{
+    "0": {
+        "loss": 2.303573555839709,
+        "cen_accuracy": 0.1
+    },
+    "1": {
+        "loss": 2.3179424700264732,
+        "cen_accuracy": 0.125,
+        "heterogeneity": 0.3396643820240073,
+        "num_clients": 5,
+        "accumulated_clients": 5
+    },
+    "2": {
+        "loss": 1.8150547822824301,
+        "cen_accuracy": 0.2745,
+        "heterogeneity": 0.28249358186424045,
+        "num_clients": 5,
+        "accumulated_clients": 10
+    },
+    "3": {
+        "loss": 1.2608885951697255,
+        "cen_accuracy": 0.5638,
+        "heterogeneity": 0.25046699706174813,
+        "num_clients": 4,
+        "accumulated_clients": 14
+    },
+    "4": {
+        "loss": 1.1823530090502656,
+        "cen_accuracy": 0.5929,
+        "heterogeneity": 0.2401441182250914,
+        "num_clients": 4,
+        "accumulated_clients": 18
+    },
+    "5": {
+        "loss": 1.3136901571727788,
+        "cen_accuracy": 0.5956,
+        "heterogeneity": 0.10658467816472417,
+        "num_clients": 4,
+        "accumulated_clients": 22
+    },
+    "6": {
+        "loss": 1.0499518848836613,
+        "cen_accuracy": 0.6872,
+        "heterogeneity": 0.16963882217721526,
+        "num_clients": 3,
+        "accumulated_clients": 25
+    },
+    "7": {
+        "loss": 0.9463226254374836,
+        "cen_accuracy": 0.6734,
+        "heterogeneity": 0.14886155326535755,
+        "num_clients": 3,
+        "accumulated_clients": 28
+    },
+    "8": {
+        "loss": 1.1762392027690387,
+        "cen_accuracy": 0.5839,
+        "heterogeneity": 0.3246458886552016,
+        "num_clients": 3,
+        "accumulated_clients": 31
+    },
+    "9": {
+        "loss": 1.3200321738331462,
+        "cen_accuracy": 0.4933,
+        "heterogeneity": 0.15989529818610893,
+        "num_clients": 3,
+        "accumulated_clients": 34
+    },
+    "10": {
+        "loss": 1.2077961314600496,
+        "cen_accuracy": 0.5578,
+        "heterogeneity": 0.1980214918898625,
+        "num_clients": 4,
+        "accumulated_clients": 38
+    },
+    "11": {
+        "loss": 1.1736623208743695,
+        "cen_accuracy": 0.5757,
+        "heterogeneity": 0.23242792250242372,
+        "num_clients": 4,
+        "accumulated_clients": 42
+    },
+    "12": {
+        "loss": 0.9153910666799393,
+        "cen_accuracy": 0.7199,
+        "heterogeneity": 0.14707741932612073,
+        "num_clients": 3,
+        "accumulated_clients": 45
+    },
+    "13": {
+        "loss": 0.6771534205244752,
+        "cen_accuracy": 0.7645,
+        "heterogeneity": 0.33461391399803775,
+        "num_clients": 3,
+        "accumulated_clients": 48
+    },
+    "14": {
+        "loss": 1.1126539055912639,
+        "cen_accuracy": 0.5356,
+        "heterogeneity": 0.17749477457650586,
+        "num_clients": 3,
+        "accumulated_clients": 51
+    },
+    "15": {
+        "loss": 0.8432583385191786,
+        "cen_accuracy": 0.6748,
+        "heterogeneity": 0.1460770763682132,
+        "num_clients": 4,
+        "accumulated_clients": 55
+    },
+    "16": {
+        "loss": 0.7262975627812334,
+        "cen_accuracy": 0.7149,
+        "heterogeneity": 0.18196606591751185,
+        "num_clients": 4,
+        "accumulated_clients": 59
+    },
+    "17": {
+        "loss": 0.9372957268842874,
+        "cen_accuracy": 0.5979,
+        "heterogeneity": 0.11270890104745357,
+        "num_clients": 3,
+        "accumulated_clients": 62
+    },
+    "18": {
+        "loss": 0.9167509484595765,
+        "cen_accuracy": 0.6786,
+        "heterogeneity": 0.2012380580256895,
+        "num_clients": 3,
+        "accumulated_clients": 65
+    },
+    "19": {
+        "loss": 0.8911875767258409,
+        "cen_accuracy": 0.6697,
+        "heterogeneity": 0.13360346353046237,
+        "num_clients": 3,
+        "accumulated_clients": 68
+    },
+    "20": {
+        "loss": 0.7655009109372148,
+        "cen_accuracy": 0.7298,
+        "heterogeneity": 0.1519190422327319,
+        "num_clients": 2,
+        "accumulated_clients": 70
+    },
+    "21": {
+        "loss": 1.154626483258348,
+        "cen_accuracy": 0.6267,
+        "heterogeneity": 0.05766800752124435,
+        "num_clients": 2,
+        "accumulated_clients": 72
+    },
+    "22": {
+        "loss": 0.7460189022766516,
+        "cen_accuracy": 0.6851,
+        "heterogeneity": 0.24402082214398824,
+        "num_clients": 2,
+        "accumulated_clients": 74
+    },
+    "23": {
+        "loss": 0.6879626812454992,
+        "cen_accuracy": 0.7591,
+        "heterogeneity": 0.07804005307876338,
+        "num_clients": 2,
+        "accumulated_clients": 76
+    },
+    "24": {
+        "loss": 0.8546229800858056,
+        "cen_accuracy": 0.6895,
+        "heterogeneity": 0.18998114098064167,
+        "num_clients": 2,
+        "accumulated_clients": 78
+    },
+    "25": {
+        "loss": 0.8602421792170492,
+        "cen_accuracy": 0.7018,
+        "heterogeneity": 0.05652177215715315,
+        "num_clients": 2,
+        "accumulated_clients": 80
+    },
+    "26": {
+        "loss": 1.242124394106027,
+        "cen_accuracy": 0.5839,
+        "heterogeneity": 0.1575423689388471,
+        "num_clients": 2,
+        "accumulated_clients": 82
+    },
+    "27": {
+        "loss": 0.7373720834049554,
+        "cen_accuracy": 0.7429,
+        "heterogeneity": 0.11328327228676227,
+        "num_clients": 2,
+        "accumulated_clients": 84
+    },
+    "28": {
+        "loss": 0.9042953987852834,
+        "cen_accuracy": 0.7045,
+        "heterogeneity": 0.16237013483613694,
+        "num_clients": 2,
+        "accumulated_clients": 86
+    },
+    "29": {
+        "loss": 0.6598696693444785,
+        "cen_accuracy": 0.7263,
+        "heterogeneity": 0.22947508005706607,
+        "num_clients": 2,
+        "accumulated_clients": 88
+    },
+    "30": {
+        "loss": 0.8737030781496066,
+        "cen_accuracy": 0.6168,
+        "heterogeneity": 0.1538276370308861,
+        "num_clients": 2,
+        "accumulated_clients": 90
+    },
+    "31": {
+        "loss": 0.9389573319461018,
+        "cen_accuracy": 0.5945,
+        "heterogeneity": 0.11170554650344455,
+        "num_clients": 2,
+        "accumulated_clients": 92
+    },
+    "32": {
+        "loss": 0.8936226549811257,
+        "cen_accuracy": 0.7013,
+        "heterogeneity": 0.1803947899703774,
+        "num_clients": 2,
+        "accumulated_clients": 94
+    },
+    "33": {
+        "loss": 0.7503205902469806,
+        "cen_accuracy": 0.7061,
+        "heterogeneity": 0.17971688358064186,
+        "num_clients": 2,
+        "accumulated_clients": 96
+    },
+    "34": {
+        "loss": 0.7009424042587463,
+        "cen_accuracy": 0.7652,
+        "heterogeneity": 0.06423451190119345,
+        "num_clients": 2,
+        "accumulated_clients": 98
+    },
+    "35": {
+        "loss": 0.8450481128007078,
+        "cen_accuracy": 0.6869,
+        "heterogeneity": 0.08224715460438548,
+        "num_clients": 2,
+        "accumulated_clients": 100
+    },
+    "36": {
+        "loss": 1.096893322448761,
+        "cen_accuracy": 0.6797,
+        "heterogeneity": 0.23921379883561245,
+        "num_clients": 2,
+        "accumulated_clients": 102
+    },
+    "37": {
+        "loss": 1.0105701939176066,
+        "cen_accuracy": 0.7329,
+        "heterogeneity": 0.11285321747273869,
+        "num_clients": 2,
+        "accumulated_clients": 104
+    },
+    "38": {
+        "loss": 0.8278723253419225,
+        "cen_accuracy": 0.7657,
+        "heterogeneity": 0.12853210114822777,
+        "num_clients": 2,
+        "accumulated_clients": 106
+    },
+    "39": {
+        "loss": 1.070336682251848,
+        "cen_accuracy": 0.6792,
+        "heterogeneity": 0.09498750322886151,
+        "num_clients": 2,
+        "accumulated_clients": 108
+    },
+    "40": {
+        "loss": 0.748913185760236,
+        "cen_accuracy": 0.7057,
+        "heterogeneity": 0.10954612485148008,
+        "num_clients": 2,
+        "accumulated_clients": 110
+    },
+    "41": {
+        "loss": 0.7766221602694295,
+        "cen_accuracy": 0.7352,
+        "heterogeneity": 0.12290658126372489,
+        "num_clients": 2,
+        "accumulated_clients": 112
+    },
+    "42": {
+        "loss": 0.7462203580731401,
+        "cen_accuracy": 0.743,
+        "heterogeneity": 0.24257879981985542,
+        "num_clients": 2,
+        "accumulated_clients": 114
+    },
+    "43": {
+        "loss": 0.8620740932207138,
+        "cen_accuracy": 0.7229,
+        "heterogeneity": 0.28996890529878017,
+        "num_clients": 2,
+        "accumulated_clients": 116
+    },
+    "44": {
+        "loss": 0.6918947266313595,
+        "cen_accuracy": 0.7175,
+        "heterogeneity": 0.15741950788305126,
+        "num_clients": 2,
+        "accumulated_clients": 118
+    },
+    "45": {
+        "loss": 1.6729525291500762,
+        "cen_accuracy": 0.5388,
+        "heterogeneity": 0.09263971455834996,
+        "num_clients": 2,
+        "accumulated_clients": 120
+    },
+    "46": {
+        "loss": 0.7459087775538142,
+        "cen_accuracy": 0.6951,
+        "heterogeneity": 0.11636628103324531,
+        "num_clients": 2,
+        "accumulated_clients": 122
+    },
+    "47": {
+        "loss": 1.0802773282931635,
+        "cen_accuracy": 0.6263,
+        "heterogeneity": 0.2991011436943172,
+        "num_clients": 2,
+        "accumulated_clients": 124
+    },
+    "48": {
+        "loss": 0.7639154923228791,
+        "cen_accuracy": 0.6765,
+        "heterogeneity": 0.13714033371672651,
+        "num_clients": 2,
+        "accumulated_clients": 126
+    },
+    "49": {
+        "loss": 0.9480760685932903,
+        "cen_accuracy": 0.6409,
+        "heterogeneity": 0.1883822475399637,
+        "num_clients": 2,
+        "accumulated_clients": 128
+    },
+    "50": {
+        "loss": 0.7074110034746103,
+        "cen_accuracy": 0.7396,
+        "heterogeneity": 0.13297792109279027,
+        "num_clients": 3,
+        "accumulated_clients": 131
+    },
+    "51": {
+        "loss": 0.651099558836355,
+        "cen_accuracy": 0.7557,
+        "heterogeneity": 0.0712522893501718,
+        "num_clients": 3,
+        "accumulated_clients": 134
+    },
+    "52": {
+        "loss": 0.7434443935704308,
+        "cen_accuracy": 0.7505,
+        "heterogeneity": 0.14216792334860084,
+        "num_clients": 3,
+        "accumulated_clients": 137
+    },
+    "53": {
+        "loss": 0.7004907392560483,
+        "cen_accuracy": 0.751,
+        "heterogeneity": 0.1933576380334895,
+        "num_clients": 3,
+        "accumulated_clients": 140
+    },
+    "54": {
+        "loss": 0.6736080030473276,
+        "cen_accuracy": 0.7473,
+        "heterogeneity": 0.12838027350861803,
+        "num_clients": 3,
+        "accumulated_clients": 143
+    },
+    "55": {
+        "loss": 0.665574035800684,
+        "cen_accuracy": 0.7377,
+        "heterogeneity": 0.13935888628748605,
+        "num_clients": 3,
+        "accumulated_clients": 146
+    },
+    "56": {
+        "loss": 0.6147901498662016,
+        "cen_accuracy": 0.7583,
+        "heterogeneity": 0.12328899652687886,
+        "num_clients": 4,
+        "accumulated_clients": 150
+    },
+    "57": {
+        "loss": 0.5666108093322656,
+        "cen_accuracy": 0.7845,
+        "heterogeneity": 0.08669017656166345,
+        "num_clients": 4,
+        "accumulated_clients": 154
+    },
+    "58": {
+        "loss": 0.5902758589663064,
+        "cen_accuracy": 0.7819,
+        "heterogeneity": 0.14728442687144472,
+        "num_clients": 4,
+        "accumulated_clients": 158
+    },
+    "59": {
+        "loss": 0.6887169803102938,
+        "cen_accuracy": 0.7524,
+        "heterogeneity": 0.09899597838864072,
+        "num_clients": 4,
+        "accumulated_clients": 162
+    },
+    "60": {
+        "loss": 0.5740111186005437,
+        "cen_accuracy": 0.7883,
+        "heterogeneity": 0.157127712152219,
+        "num_clients": 4,
+        "accumulated_clients": 166
+    },
+    "61": {
+        "loss": 0.5397309689952162,
+        "cen_accuracy": 0.7901,
+        "heterogeneity": 0.13635558834708472,
+        "num_clients": 4,
+        "accumulated_clients": 170
+    },
+    "62": {
+        "loss": 0.8318058442288694,
+        "cen_accuracy": 0.7301,
+        "heterogeneity": 0.16914483508573197,
+        "num_clients": 3,
+        "accumulated_clients": 173
+    },
+    "63": {
+        "loss": 0.7911662424143892,
+        "cen_accuracy": 0.724,
+        "heterogeneity": 0.11924889138629735,
+        "num_clients": 3,
+        "accumulated_clients": 176
+    },
+    "64": {
+        "loss": 0.6431140293614171,
+        "cen_accuracy": 0.7376,
+        "heterogeneity": 0.13428955499561157,
+        "num_clients": 3,
+        "accumulated_clients": 179
+    },
+    "65": {
+        "loss": 0.6841680960247691,
+        "cen_accuracy": 0.7512,
+        "heterogeneity": 0.11983774780096557,
+        "num_clients": 3,
+        "accumulated_clients": 182
+    },
+    "66": {
+        "loss": 0.5463361630138879,
+        "cen_accuracy": 0.7971,
+        "heterogeneity": 0.25626547862282256,
+        "num_clients": 3,
+        "accumulated_clients": 185
+    },
+    "67": {
+        "loss": 0.6944693879673656,
+        "cen_accuracy": 0.7544,
+        "heterogeneity": 0.17465065732431173,
+        "num_clients": 3,
+        "accumulated_clients": 188
+    },
+    "68": {
+        "loss": 0.6190686398706498,
+        "cen_accuracy": 0.7709,
+        "heterogeneity": 0.15382033508540816,
+        "num_clients": 2,
+        "accumulated_clients": 190
+    },
+    "69": {
+        "loss": 0.6993390240322668,
+        "cen_accuracy": 0.72,
+        "heterogeneity": 0.17516467369969746,
+        "num_clients": 2,
+        "accumulated_clients": 192
+    },
+    "70": {
+        "loss": 0.6865511272852414,
+        "cen_accuracy": 0.7515,
+        "heterogeneity": 0.08365699727461606,
+        "num_clients": 2,
+        "accumulated_clients": 194
+    },
+    "71": {
+        "loss": 0.6427446798489879,
+        "cen_accuracy": 0.7584,
+        "heterogeneity": 0.12178506507131182,
+        "num_clients": 2,
+        "accumulated_clients": 196
+    },
+    "72": {
+        "loss": 0.8261056044421637,
+        "cen_accuracy": 0.7226,
+        "heterogeneity": 0.20385639246621434,
+        "num_clients": 2,
+        "accumulated_clients": 198
+    },
+    "73": {
+        "loss": 0.6206175057937543,
+        "cen_accuracy": 0.784,
+        "heterogeneity": 0.02305653453934209,
+        "num_clients": 2,
+        "accumulated_clients": 200
+    },
+    "74": {
+        "loss": 0.9524997923130425,
+        "cen_accuracy": 0.726,
+        "heterogeneity": 0.05350345293848058,
+        "num_clients": 2,
+        "accumulated_clients": 202
+    },
+    "75": {
+        "loss": 0.58890843167663,
+        "cen_accuracy": 0.7643,
+        "heterogeneity": 0.12425682103083258,
+        "num_clients": 3,
+        "accumulated_clients": 205
+    },
+    "76": {
+        "loss": 0.6245400989874483,
+        "cen_accuracy": 0.724,
+        "heterogeneity": 0.09940406570987259,
+        "num_clients": 3,
+        "accumulated_clients": 208
+    },
+    "77": {
+        "loss": 0.6269882352778706,
+        "cen_accuracy": 0.7324,
+        "heterogeneity": 0.07386702495055264,
+        "num_clients": 3,
+        "accumulated_clients": 211
+    },
+    "78": {
+        "loss": 0.5700138403584782,
+        "cen_accuracy": 0.7942,
+        "heterogeneity": 0.05932853832193974,
+        "num_clients": 3,
+        "accumulated_clients": 214
+    },
+    "79": {
+        "loss": 0.6001540711893442,
+        "cen_accuracy": 0.7881,
+        "heterogeneity": 0.2493711411673133,
+        "num_clients": 3,
+        "accumulated_clients": 217
+    },
+    "80": {
+        "loss": 0.6858025535988731,
+        "cen_accuracy": 0.6923,
+        "heterogeneity": 0.11039639326079964,
+        "num_clients": 3,
+        "accumulated_clients": 220
+    },
+    "81": {
+        "loss": 0.6538344924442303,
+        "cen_accuracy": 0.7405,
+        "heterogeneity": 0.11090589624376523,
+        "num_clients": 3,
+        "accumulated_clients": 223
+    },
+    "82": {
+        "loss": 0.5815906558935635,
+        "cen_accuracy": 0.7539,
+        "heterogeneity": 0.20796937620276346,
+        "num_clients": 4,
+        "accumulated_clients": 227
+    },
+    "83": {
+        "loss": 0.5487726686861568,
+        "cen_accuracy": 0.8057,
+        "heterogeneity": 0.15698728167752207,
+        "num_clients": 4,
+        "accumulated_clients": 231
+    },
+    "84": {
+        "loss": 0.5668393382534813,
+        "cen_accuracy": 0.7745,
+        "heterogeneity": 0.0759549741207991,
+        "num_clients": 4,
+        "accumulated_clients": 235
+    },
+    "85": {
+        "loss": 0.6455810777485942,
+        "cen_accuracy": 0.7138,
+        "heterogeneity": 0.16570184724165038,
+        "num_clients": 4,
+        "accumulated_clients": 239
+    },
+    "86": {
+        "loss": 0.5030950593967407,
+        "cen_accuracy": 0.8153,
+        "heterogeneity": 0.10499810096221118,
+        "num_clients": 4,
+        "accumulated_clients": 243
+    },
+    "87": {
+        "loss": 0.7533766449259492,
+        "cen_accuracy": 0.7281,
+        "heterogeneity": 0.17431900694819225,
+        "num_clients": 4,
+        "accumulated_clients": 247
+    },
+    "88": {
+        "loss": 0.8447737928967887,
+        "cen_accuracy": 0.7041,
+        "heterogeneity": 0.11839641367636744,
+        "num_clients": 4,
+        "accumulated_clients": 251
+    },
+    "89": {
+        "loss": 0.6186560292403919,
+        "cen_accuracy": 0.7696,
+        "heterogeneity": 0.09532059382057168,
+        "num_clients": 5,
+        "accumulated_clients": 256
+    },
+    "90": {
+        "loss": 0.575349079915129,
+        "cen_accuracy": 0.7972,
+        "heterogeneity": 0.07206396654045388,
+        "num_clients": 5,
+        "accumulated_clients": 261
+    },
+    "91": {
+        "loss": 0.6207585194811653,
+        "cen_accuracy": 0.7913,
+        "heterogeneity": 0.09410902201070281,
+        "num_clients": 5,
+        "accumulated_clients": 266
+    },
+    "92": {
+        "loss": 0.5483379108837237,
+        "cen_accuracy": 0.7959,
+        "heterogeneity": 0.11056742935591368,
+        "num_clients": 5,
+        "accumulated_clients": 271
+    },
+    "93": {
+        "loss": 0.624276828556396,
+        "cen_accuracy": 0.7906,
+        "heterogeneity": 0.14361031802190793,
+        "num_clients": 5,
+        "accumulated_clients": 276
+    },
+    "94": {
+        "loss": 0.5957414692583175,
+        "cen_accuracy": 0.7854,
+        "heterogeneity": 0.11764307871891533,
+        "num_clients": 5,
+        "accumulated_clients": 281
+    },
+    "95": {
+        "loss": 0.4765638448416996,
+        "cen_accuracy": 0.8292,
+        "heterogeneity": 0.11101399007239399,
+        "num_clients": 5,
+        "accumulated_clients": 286
+    },
+    "96": {
+        "loss": 0.556714456445112,
+        "cen_accuracy": 0.7903,
+        "heterogeneity": 0.17564712707221386,
+        "num_clients": 4,
+        "accumulated_clients": 290
+    },
+    "97": {
+        "loss": 0.5210355013704148,
+        "cen_accuracy": 0.8041,
+        "heterogeneity": 0.14708880352582598,
+        "num_clients": 4,
+        "accumulated_clients": 294
+    },
+    "98": {
+        "loss": 0.6785634213838333,
+        "cen_accuracy": 0.758,
+        "heterogeneity": 0.14090867598773826,
+        "num_clients": 4,
+        "accumulated_clients": 298
+    },
+    "99": {
+        "loss": 0.5657660695501029,
+        "cen_accuracy": 0.7983,
+        "heterogeneity": 0.10688006625462487,
+        "num_clients": 4,
+        "accumulated_clients": 302
+    },
+    "100": {
+        "loss": 0.479790225434608,
+        "cen_accuracy": 0.8279,
+        "heterogeneity": 0.13293368870410482,
+        "num_clients": 4,
+        "accumulated_clients": 306
+    }
+}
