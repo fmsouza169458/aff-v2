@@ -1,5 +1,3 @@
-"""custom_mods: A Flower app with custom mods."""
-
 import warnings
 from collections import OrderedDict
 
@@ -16,8 +14,6 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Net(nn.Module):
-    """Model (simple CNN adapted from 'PyTorch: A 60 Minute Blitz')"""
-
     def __init__(self) -> None:
         super(Net, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
@@ -64,35 +60,38 @@ class Net(nn.Module):
 
 
 def get_transforms():
-    """Return a function that apply standard transformations to images."""
-
     pytorch_transforms = Compose(
         [ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
 
     def apply_transforms(batch):
-        """Apply transforms to the partition from FederatedDataset."""
         batch["img"] = torch.stack([pytorch_transforms(img) for img in batch["img"]])
         return batch
 
     return apply_transforms
 
+"""
+Get weights from model.
+"""
 def get_weights(net):
     return [val.cpu().numpy() for _, val in net.state_dict().items()]
 
 
+"""
+Set weights to model.
+"""
 def set_weights(net, parameters):
     params_dict = zip(net.state_dict().keys(), parameters)
     state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
     net.load_state_dict(state_dict, strict=True)
 
 
-fds = None  # Cache FederatedDataset
+fds = None
 
-
+"""
+Load Data, apply transformation and partitioning for CIFAR10.
+"""
 def load_data(partition_id: int, num_partitions: int, batch_size: int, alpha_dirichlet: float, seed: int):
-    """Load partition CIFAR10 data."""
-    # Only initialize `FederatedDataset` once
     global fds
     if fds is None:
         partitioner = DirichletPartitioner(
@@ -103,14 +102,12 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int, alpha_dir
             partitioners={"train": partitioner},
         )
     partition = fds.load_partition(partition_id)
-    # Divide data on each node: 80% train, 20% test
     partition_train_test = partition.train_test_split(test_size=0.2, seed=seed)
     pytorch_transforms = Compose(
         [ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     )
 
     def apply_transforms(batch):
-        """Apply transforms to the partition from FederatedDataset."""
         batch["img"] = torch.stack([pytorch_transforms(img) for img in batch["img"]])
         return batch
 
@@ -139,8 +136,10 @@ def load_data(partition_id: int, num_partitions: int, batch_size: int, alpha_dir
     return trainloader, testloader
 
 
+"""
+Train method for AFF, HETAAFF and FEDAVG.
+"""
 def train(net, trainloader, valloader, epochs, learning_rate, device):
-    """Train the model on the training set."""
     net.to(device)
     net.train()
     criterion = torch.nn.CrossEntropyLoss().to(device)
@@ -190,6 +189,9 @@ def train(net, trainloader, valloader, epochs, learning_rate, device):
     return results
 
 
+"""
+Train method for Critical-FL.
+"""
 def train_with_gradient_norms(net, trainloader, valloader, epochs, learning_rate, device):
     net.to(device)
     net.train()
@@ -247,7 +249,6 @@ def train_with_gradient_norms(net, trainloader, valloader, epochs, learning_rate
             gradient_norms.append(sum_norms / batch_count)
             losses.append(epoch_loss_avg / batch_count)
     
-    avg_loss = sum(losses) / len(losses) if losses else 0.0
     avg_gradient_norm = sum(gradient_norms) / len(gradient_norms) if gradient_norms else 0.0
     
     local_fgn = avg_gradient_norm * learning_rate
@@ -265,8 +266,10 @@ def train_with_gradient_norms(net, trainloader, valloader, epochs, learning_rate
     return results
 
 
+"""
+Common test method for all strategies.
+"""
 def test(net, testloader, device):
-    """Validate the model on the test set."""
     net.to(device)
     net.eval()
     criterion = torch.nn.CrossEntropyLoss()

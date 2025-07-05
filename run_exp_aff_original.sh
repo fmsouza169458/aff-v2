@@ -10,7 +10,6 @@ export POLYNOMIAL_DEGREE="1"
 export MAX_WINDOW_SIZE="20"
 export MIN_WINDOW_SIZE="2"
 export USE_HETEROGENEITY="false"
-export REGRESSION_TYPE="linear"
 
 datasets=("MNIST" "CIFAR10")
 initial_ffs=("0.1" "0.05")
@@ -21,12 +20,10 @@ rounds["MNIST"]=100
 rounds["CIFAR10"]=200
 
 mkdir -p logs
-echo "Iniciando experimentos em $(date)" > experiments_log.txt
 
 for i in {1..3}; do
     for dataset in "${datasets[@]}"; do
         num_rounds=${rounds[$dataset]}
-    
         
         for ff in "${initial_ffs[@]}"; do
             for alpha in "${alphas[@]}"; do

@@ -10,7 +10,6 @@ export POLYNOMIAL_DEGREE="1"
 export MAX_WINDOW_SIZE="20"
 export MIN_WINDOW_SIZE="2"
 export USE_HETEROGENEITY="true"
-export REGRESSION_TYPE="linear"
 
 datasets=("MNIST" "CIFAR10")
 initial_ffs=("0.1" "0.05")

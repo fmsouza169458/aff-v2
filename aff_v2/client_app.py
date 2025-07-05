@@ -1,8 +1,6 @@
 import torch
-from random import random
 from flwr.client import ClientApp, NumPyClient
 from flwr.common import Context, ConfigRecord
-import json
 import os
 
 DATASET = os.getenv("DATASET", "MNIST")
@@ -30,8 +28,11 @@ class FlowerClient(NumPyClient):
         if "fit_metrics" not in self.client_state.config_records:
             self.client_state.config_records["fit_metrics"] = ConfigRecord()
 
+    """
+    Using the strategy and dataset provided on a training section,
+    selects the appropriate train method
+    """
     def fit(self, parameters, config):
-        """Train the model with data of this client."""
         set_weights(self.net, parameters)
         
         if self.strategy == "CRITICAL_FL":
@@ -52,7 +53,7 @@ class FlowerClient(NumPyClient):
                     self.trainloader,
                     self.local_epochs,
                     device=self.device,
-                    lr=config["lr"],
+                    lr=self.learning_rate,
                 )
             
             return (
@@ -80,7 +81,7 @@ class FlowerClient(NumPyClient):
                     self.trainloader,
                     self.local_epochs,
                     device=self.device,
-                    lr=config["lr"],
+                    lr=self.learning_rate,
                 )
 
             fit_metrics = self.client_state.config_records["fit_metrics"]
@@ -100,16 +101,16 @@ class FlowerClient(NumPyClient):
             )
 
     def evaluate(self, parameters, config):
-        """Evaluate the model on the data this client has."""
         set_weights(self.net, parameters)
         loss, accuracy = test(self.net, self.valloader, self.device)
         return loss, len(self.valloader.dataset), {"accuracy": accuracy}
 
 
+"""
+Initializes the client using the parameters provided for the experiment
+"""
 def client_fn(context: Context):
-    """Construct a Client that will be run in a ClientApp."""
     seed = int(os.getenv("SEED", "1"))
-
     set_seed(seed)
 
     partition_id = context.node_config["partition-id"]
@@ -129,5 +130,4 @@ def client_fn(context: Context):
     return FlowerClient(trainloader, valloader, local_epochs, context).to_client()
 
 
-# Flower ClientApp
 app = ClientApp(client_fn=client_fn)

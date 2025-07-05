@@ -1,7 +1,6 @@
 import json
 import os
-from typing import List, Tuple
-from flwr.common import Context, ndarrays_to_parameters, Metrics
+from flwr.common import Context, ndarrays_to_parameters
 from flwr.server import ServerApp, ServerAppComponents, ServerConfig
 from torch.utils.data import DataLoader
 from datasets import load_dataset
@@ -11,7 +10,6 @@ from aff_v2.task_cifar import Net as cifar_net, get_weights as cifar_get_weights
 from aff_v2.task_mnist import Net as mnist_net, get_weights as mnist_get_weights, set_weights as mnist_set_weights, test as mnist_test, get_transforms as mnist_get_transforms
 
 from aff_v2.fedavgg_constant import FedAvgWithLogging
-from aff_v2.aff_with_gaussian import AffWithGaussian
 from aff_v2.aff_with_het import AffWithHet
 from aff_v2.aff_without_het import AffWithoutHet
 from aff_v2.critical_fl import CriticalFL
@@ -26,19 +24,9 @@ def get_evaluate_fn(testloader, device, net_function, set_weights_function, test
         return loss, {"cen_accuracy": accuracy}
     return evaluate
 
-
-def weighted_average(metrics: List[Tuple[int, Metrics]]) -> Metrics:
-    accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
-    total_examples = sum(num_examples for num_examples, _ in metrics)
-    return {"accuracy": sum(accuracies) / total_examples}
-
-
-def on_fit_config(server_round: int) -> Metrics:
-    lr = 0.01
-    if server_round > 2:
-        lr = 0.005
-    return {"lr": lr}
-
+"""
+Get the experiment configuration from the environment variables
+"""
 def get_strategy_config() -> dict:
     dataset = os.getenv("DATASET", "MNIST")
     initial_ff = float(os.getenv("INITIAL_FF", "0.1"))
@@ -49,9 +37,7 @@ def get_strategy_config() -> dict:
     max_window_size = int(os.getenv("MAX_WINDOW_SIZE", "20"))
     min_window_size = int(os.getenv("MIN_WINDOW_SIZE", "2"))
     use_heterogeneity = os.getenv("USE_HETEROGENEITY", "false").lower() == "true"
-    regression_type = os.getenv("REGRESSION_TYPE", "gaussian")
     seed = int(os.getenv("SEED", "unknown"))
-    gaussian_sigma = float(os.getenv("GAUSSIAN_SIGMA", "1.0"))
     fgn_threshold = float(os.getenv("FGN_THRESHOLD", "0.01"))
 
     
@@ -65,8 +51,6 @@ def get_strategy_config() -> dict:
         "max_window_size": max_window_size,
         "min_window_size": min_window_size,
         "use_heterogeneity": use_heterogeneity,
-        "regression_type": regression_type,
-        "gaussian_sigma": gaussian_sigma,
         "fgn_threshold": fgn_threshold,
         "seed": seed
     }
@@ -81,6 +65,10 @@ def server_fn(context: Context):
 
     num_rounds = strategy_config["rounds"]
 
+    """
+    This section is used to load proper dataset and functions
+    And assign it to defined strategy
+    """
     if strategy_config["dataset"] == "MNIST":
         ndarrays = mnist_get_weights(mnist_net())
         parameters = ndarrays_to_parameters(ndarrays)
@@ -106,8 +94,6 @@ def server_fn(context: Context):
         if strategy_config["use_heterogeneity"]:
             strategy = AffWithHet(
                 initial_parameters=parameters,
-                evaluate_metrics_aggregation_fn=weighted_average,
-                on_fit_config_fn=on_fit_config,
                 evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
                 min_available_clients=100,
                 max_clients=100,
@@ -119,8 +105,6 @@ def server_fn(context: Context):
         else:
             strategy = AffWithoutHet(
                 initial_parameters=parameters,
-                evaluate_metrics_aggregation_fn=weighted_average,
-                on_fit_config_fn=on_fit_config,
                 evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
                 min_available_clients=100,
                 max_clients=100,
@@ -132,8 +116,6 @@ def server_fn(context: Context):
     elif strategy_config["strategy_type"] == "CRITICAL_FL":
         strategy = CriticalFL(
             initial_parameters=parameters,
-            evaluate_metrics_aggregation_fn=weighted_average,
-            on_fit_config_fn=on_fit_config,
             evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
             min_available_clients=100,
             max_clients=100,
@@ -146,7 +128,6 @@ def server_fn(context: Context):
             fraction_fit=strategy_config["initial_ff"],
             min_available_clients=100,
             evaluate_fn=get_evaluate_fn(testloader, device="cpu", net_function=net_function, set_weights_function=set_weights_function, test_function=test_function),
-            on_fit_config_fn=on_fit_config,
             initial_parameters=parameters,
         ) 
 
